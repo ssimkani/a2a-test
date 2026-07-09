@@ -18,6 +18,8 @@ export const mastra = new Mastra({
   }),
   server: {
     host: process.env.MASTRA_HOST ?? '0.0.0.0',
+    studioHost: process.env.MASTRA_STUDIO_HOST ?? 'localhost',
+    studioProtocol: 'http',
     port: Number(process.env.PORT ?? 4111),
     apiPrefix: '/api',
     middleware: a2aApiToken

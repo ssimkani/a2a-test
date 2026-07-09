@@ -29,6 +29,8 @@ The default configuration expects Ollama at `http://127.0.0.1:11434/api`. Change
 
 Set a long random `A2A_API_TOKEN` in `.env` if the bridged network is not fully trusted. Use the same value as `VM_A2A_TOKEN` on the client computer.
 
+Set `MASTRA_STUDIO_HOST` to the VM's current bridged IP address. Keep `MASTRA_HOST=0.0.0.0`; that is the server bind address, while `MASTRA_STUDIO_HOST` is the address browsers use.
+
 Allow inbound TCP port `4111` in the VM operating system firewall. Do not expose Ollama's port `11434`; only Mastra needs to reach it locally.
 
 ## 4. Start the server
