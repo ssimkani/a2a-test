@@ -7,6 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "mastra dev",
     "build": "mastra build",
+    "a2a:vm:stream": "node scripts/a2a-vm-stream.mjs",
     "start": "mastra start"
   },
   "keywords": [],
@@ -17,6 +18,7 @@
     "node": ">=22.13.0"
   },
   "dependencies": {
+    "@mastra/client-js": "^1.31.1",
     "@mastra/core": "^1.50.1",
     "@mastra/duckdb": "^1.5.1",
     "@mastra/evals": "^1.5.1",
@@ -24,6 +26,8 @@
     "@mastra/loggers": "^1.2.0",
     "@mastra/memory": "^1.22.2",
     "@mastra/observability": "^1.16.0",
+    "ai-sdk-ollama": "^4.0.0",
+    "ollama-ai-provider-v2": "^4.0.1",
     "zod": "^4.4.3"
   },
   "devDependencies": {

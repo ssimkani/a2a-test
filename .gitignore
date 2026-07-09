@@ -8,3 +8,8 @@ dist
 *.db-*
 .netlify
 .vercel
+# Local Mastra storage and database state
+src/mastra/public/*.db
+src/mastra/public/*.db-*
+src/mastra/public/*.duckdb
+src/mastra/public/*.duckdb.*
