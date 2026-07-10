@@ -1,4 +1,5 @@
 import { createPeerA2ATool } from './peer-a2a-tool';
+import { a2aAgentWorkspace } from '../workspace';
 
 export const sendToVmAgentTool = createPeerA2ATool({
   id: 'send-to-vm-agent',
@@ -10,4 +11,5 @@ export const sendToVmAgentTool = createPeerA2ATool({
   agentIdEnv: 'VM_A2A_AGENT_ID',
   apiPrefixEnv: 'VM_MASTRA_API_PREFIX',
   tokenEnv: 'VM_A2A_TOKEN',
+  workspace: a2aAgentWorkspace,
 });
