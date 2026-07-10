@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "mastra dev",
     "build": "mastra build",
-    "a2a:vm:stream": "node scripts/a2a-vm-stream.mjs",
+    "a2a:vm:stream": "node --env-file=.env scripts/a2a-vm-stream.mjs",
     "start": "mastra start"
   },
   "keywords": [],

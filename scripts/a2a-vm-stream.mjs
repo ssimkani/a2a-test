@@ -47,13 +47,35 @@ const stream = a2a.sendMessageStream({
 });
 
 let lastTaskId;
+const artifacts = new Map();
 
 for await (const event of stream) {
   if (event.kind === 'task' || event.kind === 'status-update' || event.kind === 'artifact-update') {
     lastTaskId = event.taskId ?? event.id ?? lastTaskId;
   }
 
-  console.log(JSON.stringify(event, null, 2));
+  if (event.kind === 'artifact-update') {
+    const artifactId = event.artifact.artifactId;
+    const chunk = (event.artifact.parts ?? [])
+      .filter((part) => part.kind === 'text' && typeof part.text === 'string')
+      .map((part) => part.text)
+      .join('');
+    const response = event.append ? `${artifacts.get(artifactId) ?? ''}${chunk}` : chunk;
+
+    artifacts.set(artifactId, response);
+    process.stdout.write(chunk);
+    continue;
+  }
+
+  if (event.kind === 'status-update' && event.final) {
+    process.stdout.write('\n');
+    console.log(`Task completed: ${event.status.state}`);
+    continue;
+  }
+
+  if (event.kind !== 'task' && event.kind !== 'status-update') {
+    console.log(JSON.stringify(event, null, 2));
+  }
 }
 
 if (lastTaskId) {
