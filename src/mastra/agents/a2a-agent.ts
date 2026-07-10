@@ -1,6 +1,7 @@
 import { Agent } from '@mastra/core/agent';
 import { Memory } from '@mastra/memory';
 import { ollama } from 'ollama-ai-provider-v2';
+import { a2aAgentWorkspace } from '../workspace';
 
 export const a2aAgent = new Agent({
   id: 'a2a-agent',
@@ -11,4 +12,5 @@ Keep each reply concise, conversational, and easy for the VM agent to respond to
 Do not mention implementation details unless asked.`,
   model: ollama('qwen3:1.7b'),
   memory: new Memory(),
+  workspace: a2aAgentWorkspace,
 });
