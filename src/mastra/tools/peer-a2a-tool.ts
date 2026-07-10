@@ -1,6 +1,7 @@
 import { MastraClient } from '@mastra/client-js';
 import type { Message, Task, TaskArtifactUpdateEvent, TaskStatusUpdateEvent } from '@mastra/core/a2a/client';
 import { createTool } from '@mastra/core/tools';
+import type { Workspace } from '@mastra/core/workspace';
 import { basename } from 'node:path';
 import { z } from 'zod';
 
@@ -38,6 +39,7 @@ interface PeerA2AToolOptions {
   agentIdEnv: string;
   apiPrefixEnv: string;
   tokenEnv: string;
+  workspace: Workspace;
 }
 
 function textFromParts(parts: A2APart[]): string {
@@ -69,7 +71,12 @@ function mediaTypeFor(path: string): string {
   return mediaTypes[extension ?? ''] ?? 'application/octet-stream';
 }
 
-function promptForPeer(input: z.infer<typeof peerMessageInputSchema>, options: PeerA2AToolOptions, collaborationId: string) {
+function promptForPeer(
+  input: z.infer<typeof peerMessageInputSchema>,
+  options: PeerA2AToolOptions,
+  collaborationId: string,
+  envelope: Record<string, unknown>,
+) {
   return `[Peer A2A message]
 Source agent: ${options.sourceAgentId}
 Target agent: ${options.targetAgentId}
@@ -79,7 +86,13 @@ Round: ${input.round}/${MAX_COLLABORATION_ROUNDS}
 
 ${input.message}
 
-Structured JSON and workspace files, when present, are attached as separate A2A parts. Do not initiate another peer call merely to acknowledge this message. If a substantive follow-up is necessary, reuse the collaboration ID and increment the round. Do not continue beyond round ${MAX_COLLABORATION_ROUNDS}.`;
+The structured JSON and workspace file payload follows. The file content is embedded in this envelope; the sender's workspace path does not exist in your local workspace. Read text content directly from the envelope. If you need a local copy, write it beneath a2a/inbox/${collaborationId}/. Text files contain UTF-8 content; binary files contain base64 content.
+
+<peer-envelope>
+${JSON.stringify(envelope, null, 2)}
+</peer-envelope>
+
+Do not initiate another peer call merely to acknowledge this message. If a substantive follow-up is necessary, reuse the collaboration ID and increment the round. Do not continue beyond round ${MAX_COLLABORATION_ROUNDS}.`;
 }
 
 export function createPeerA2ATool(options: PeerA2AToolOptions) {
@@ -89,7 +102,7 @@ export function createPeerA2ATool(options: PeerA2AToolOptions) {
     inputSchema: peerMessageInputSchema,
     outputSchema: peerMessageOutputSchema,
     execute: async (inputData, context) => {
-      const workspace = context?.workspace;
+      const workspace = context?.workspace ?? options.workspace;
       const filesystem = workspace?.filesystem;
 
       if (!filesystem) {
@@ -107,41 +120,43 @@ export function createPeerA2ATool(options: PeerA2AToolOptions) {
 
       const collaborationId = inputData.collaborationId ?? crypto.randomUUID();
       const messageId = crypto.randomUUID();
-      const parts: A2APart[] = [
-        {
-          kind: 'text',
-          text: promptForPeer(inputData, options, collaborationId),
-        },
-        {
-          kind: 'data',
-          data: {
-            protocol: 'edge-peer-collaboration/v1',
-            sourceAgent: options.sourceAgentId,
-            targetAgent: targetAgentId,
-            purpose: inputData.purpose,
-            collaborationId,
-            round: inputData.round,
-            maxRounds: MAX_COLLABORATION_ROUNDS,
-            payload: inputData.data,
-          },
-        },
-      ];
+      const files: Array<{
+        name: string;
+        mimeType: string;
+        encoding: 'utf-8' | 'base64';
+        content: string;
+      }> = [];
 
       for (const path of inputData.workspaceFiles) {
         const content = await filesystem.readFile(path, { encoding: 'binary' });
-        parts.push({
-          kind: 'file',
-          file: {
-            bytes: Buffer.from(content).toString('base64'),
-            mimeType: mediaTypeFor(path),
-            name: basename(path),
-          },
-          metadata: {
-            workspacePath: path,
-            sourceAgent: options.sourceAgentId,
-          },
+        const buffer = Buffer.from(content);
+        const mimeType = mediaTypeFor(path);
+        const isText = mimeType.startsWith('text/') || mimeType === 'application/json' || mimeType === 'application/x-ndjson';
+        files.push({
+          name: basename(path),
+          mimeType,
+          encoding: isText ? 'utf-8' : 'base64',
+          content: isText ? buffer.toString('utf8') : buffer.toString('base64'),
         });
       }
+
+      const envelope = {
+        protocol: 'edge-peer-collaboration/v1',
+        sourceAgent: options.sourceAgentId,
+        targetAgent: targetAgentId,
+        purpose: inputData.purpose,
+        collaborationId,
+        round: inputData.round,
+        maxRounds: MAX_COLLABORATION_ROUNDS,
+        payload: inputData.data,
+        files,
+      };
+      const parts: A2APart[] = [
+        {
+          kind: 'text',
+          text: promptForPeer(inputData, options, collaborationId, envelope),
+        },
+      ];
 
       const client = new MastraClient({
         baseUrl,
@@ -173,6 +188,8 @@ export function createPeerA2ATool(options: PeerA2AToolOptions) {
       const responseData: Array<Record<string, unknown>> = [];
       let messageText = '';
       let taskId: string | undefined;
+      let finalState: string | undefined;
+      let failureMessage = '';
 
       for await (const event of stream) {
         if (event.kind === 'task') {
@@ -184,6 +201,13 @@ export function createPeerA2ATool(options: PeerA2AToolOptions) {
         if (event.kind === 'message') {
           messageText += textFromParts(event.parts);
           responseData.push(...dataFromParts(event.parts));
+        }
+
+        if (event.kind === 'status-update' && event.final) {
+          finalState = event.status.state;
+          if (event.status.message) {
+            failureMessage = textFromParts(event.status.message.parts);
+          }
         }
 
         if (event.kind === 'artifact-update') {
@@ -215,6 +239,8 @@ export function createPeerA2ATool(options: PeerA2AToolOptions) {
             sentFiles: inputData.workspaceFiles,
             response,
             responseData,
+            finalState,
+            failureMessage,
             completedAt: new Date().toISOString(),
           },
           null,
@@ -222,6 +248,10 @@ export function createPeerA2ATool(options: PeerA2AToolOptions) {
         ),
         { recursive: true, overwrite: true },
       );
+
+      if (finalState === 'failed') {
+        throw new Error(`Peer A2A task failed${failureMessage ? `: ${failureMessage}` : ''}`);
+      }
 
       return {
         collaborationId,
@@ -236,4 +266,3 @@ export function createPeerA2ATool(options: PeerA2AToolOptions) {
     },
   });
 }
-

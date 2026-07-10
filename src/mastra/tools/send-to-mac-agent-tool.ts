@@ -1,4 +1,5 @@
 import { createPeerA2ATool } from './peer-a2a-tool';
+import { vmAgentWorkspace } from '../workspace';
 
 export const sendToMacAgentTool = createPeerA2ATool({
   id: 'send-to-mac-agent',
@@ -10,4 +11,5 @@ export const sendToMacAgentTool = createPeerA2ATool({
   agentIdEnv: 'MAC_A2A_AGENT_ID',
   apiPrefixEnv: 'MAC_MASTRA_API_PREFIX',
   tokenEnv: 'MAC_A2A_TOKEN',
+  workspace: vmAgentWorkspace,
 });
