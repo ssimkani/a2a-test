@@ -7,9 +7,9 @@ const ollama = createOllama({
 });
 
 export const vmAgent = new Agent({
-  id: 'vm-agent',
-  name: 'VM A2A Agent',
-  instructions: `You are a remote peer agent running on a VM.
+  id: 'a2a-agent',
+  name: 'MAC A2A Agent',
+  instructions: `You are an agent running on the mac.
 
 Respond directly to requests received through the A2A protocol. Keep responses concise unless the caller asks for detail. When the caller sends structured or file data, acknowledge what was received and clearly describe any result you produce.`,
   model: ollama(process.env.OLLAMA_MODEL ?? 'qwen3:1.7b'),
