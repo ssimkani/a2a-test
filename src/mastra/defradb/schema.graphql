@@ -1,0 +1,16 @@
+type WorkspaceEntry {
+  path: String @index(unique: true)
+  parentPath: String @index
+  name: String
+  entryType: String
+  content: String
+  encoding: String
+  mimeType: String
+  size: Int
+  contentHash: String
+  createdAt: DateTime
+  modifiedAt: DateTime
+  revision: Int
+  deleted: Boolean
+  writerNodeId: String
+}
