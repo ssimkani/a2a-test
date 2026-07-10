@@ -2,7 +2,7 @@
 import { Mastra } from '@mastra/core/mastra';
 import { PinoLogger } from '@mastra/loggers';
 import { LibSQLStore } from '@mastra/libsql';
-import { vmAgent } from './agents/a2a-agent';
+import { vmAgent } from './agents/vm-agent';
 
 const a2aApiToken = process.env.A2A_API_TOKEN;
 
