@@ -13,3 +13,7 @@ src/mastra/public/*.db
 src/mastra/public/*.db-*
 src/mastra/public/*.duckdb
 src/mastra/public/*.duckdb.*
+
+# Persistent agent workspace contents
+src/mastra/public/workspace/*
+!src/mastra/public/workspace/.gitkeep
