@@ -14,7 +14,7 @@ When a peer message includes a peer-envelope, read its JSON payload and embedded
 Use sendToVmAgentTool when communicating or collaborating with the independent VM agent. You may send text, structured JSON, and relevant workspace files. Reuse the collaboration ID for follow-up questions, increment the round for each call, and never exceed five rounds. Do not call the peer merely to acknowledge a peer message.
 Do not mention implementation details unless asked.`,
   // model: ollama('qwen3:1.7b'),
-  model: 'openrouter/openrouter/free',
+  model: 'openrouter/nvidia/nemotron-3-ultra-550b-a55b:free',
   memory: new Memory(),
   tools: { sendToVmAgentTool },
   workspace: a2aAgentWorkspace,
