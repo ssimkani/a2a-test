@@ -71,3 +71,30 @@ npm run a2a:vm:stream -- "Reply with a streamed hello"
 ```
 
 The execution endpoint used by the SDK is `http://VM_IP:4111/api/a2a/vm-agent`.
+
+## 6. Send a streamed message from the VM to the MacBook
+
+The MacBook must be running its Mastra server on its LAN interface. On the MacBook,
+start it with:
+
+```bash
+HOST=0.0.0.0 npm run dev
+```
+
+From this VM project, configure `.env`:
+
+```bash
+MAC_MASTRA_BASE_URL=http://192.168.21.97:4111
+MAC_A2A_AGENT_ID=a2a-agent
+MAC_MASTRA_API_PREFIX=/api
+```
+
+If the MacBook uses an A2A bearer token, set the same value in `MAC_A2A_TOKEN`.
+Then run:
+
+```bash
+npm run a2a:mac:stream -- "Hello from the VM agent"
+```
+
+The MacBook firewall must allow inbound TCP port `4111`, and the MacBook Mastra
+server must expose an agent with ID `a2a-agent`.

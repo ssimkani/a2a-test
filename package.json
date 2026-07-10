@@ -8,6 +8,7 @@
     "dev": "mastra dev",
     "build": "mastra build",
     "a2a:vm:stream": "node scripts/a2a-vm-stream.mjs",
+    "a2a:mac:stream": "node --env-file=.env scripts/a2a-mac-stream.mjs",
     "start": "mastra start"
   },
   "keywords": [],
