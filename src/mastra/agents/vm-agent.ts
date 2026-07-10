@@ -1,6 +1,7 @@
 import { Agent } from '@mastra/core/agent';
 import { Memory } from '@mastra/memory';
 import { createOllama } from 'ollama-ai-provider-v2';
+import { sendToMacAgentTool } from '../tools/send-to-mac-agent-tool';
 import { vmAgentWorkspace } from '../workspace';
 
 const ollama = createOllama({
@@ -12,8 +13,10 @@ export const vmAgent = new Agent({
   name: 'VM A2A Agent',
   instructions: `You are an agent running on the VM.
 
-Respond directly to requests received through the A2A protocol. Keep responses concise unless the caller asks for detail. When the caller sends structured or file data, acknowledge what was received and clearly describe any result you produce.`,
+Respond directly to requests received through the A2A protocol. Keep responses concise unless the caller asks for detail. When the caller sends structured or file data, acknowledge what was received and clearly describe any result you produce.
+Use sendToMacAgentTool when communicating or collaborating with the independent MacBook agent. You may send text, structured JSON, and relevant workspace files. Reuse the collaboration ID for follow-up questions, increment the round for each call, and never exceed five rounds. Do not call the peer merely to acknowledge a peer message.`,
   model: ollama(process.env.OLLAMA_MODEL ?? 'qwen3:1.7b'),
   memory: new Memory(),
+  tools: { sendToMacAgentTool },
   workspace: vmAgentWorkspace,
 });
