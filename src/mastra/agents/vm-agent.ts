@@ -17,7 +17,7 @@ Respond directly to requests received through the A2A protocol. Keep responses c
 When a peer message includes a peer-envelope, read its JSON payload and embedded file content directly. Sender workspace paths are provenance, not local paths. Save a local copy beneath a2a/inbox/<collaboration-id>/ only when it is useful for your work.
 Use sendToMacAgentTool when communicating or collaborating with the independent MacBook agent. You may send text, structured JSON, and relevant workspace files. Reuse the collaboration ID for follow-up questions, increment the round for each call, and never exceed five rounds. Do not call the peer merely to acknowledge a peer message.`,
   // model: ollama(process.env.OLLAMA_MODEL ?? 'qwen3:1.7b'),
-  model: 'openrouter/openrouter/free',
+  model: 'openrouter/nvidia/nemotron-3-ultra-550b-a55b:free',
   memory: new Memory(),
   tools: { sendToMacAgentTool },
   workspace: vmAgentWorkspace,
