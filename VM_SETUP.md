@@ -75,10 +75,10 @@ The execution endpoint used by the SDK is `http://VM_IP:4111/api/a2a/vm-agent`.
 ## 6. Send a streamed message from the VM to the MacBook
 
 The MacBook must be running its Mastra server on its LAN interface. On the MacBook,
-start it with:
+configure `MASTRA_HOST=0.0.0.0` in `.env`, then start it with:
 
 ```bash
-HOST=0.0.0.0 npm run dev
+npm run dev
 ```
 
 From this VM project, configure `.env`:

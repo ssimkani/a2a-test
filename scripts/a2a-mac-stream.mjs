@@ -1,12 +1,17 @@
 import { MastraClient } from '@mastra/client-js';
 
-const baseUrl = process.env.MAC_MASTRA_BASE_URL ?? 'http://192.168.21.97:4111';
+const baseUrl = process.env.MAC_MASTRA_BASE_URL;
 const agentId = process.env.MAC_A2A_AGENT_ID ?? 'a2a-agent';
 const apiPrefix = process.env.MAC_MASTRA_API_PREFIX ?? '/api';
 const token = process.env.MAC_A2A_TOKEN;
 const prompt =
   process.argv.slice(2).join(' ') ||
   'Hello from the VM agent. Please reply with a short, friendly response.';
+
+if (!baseUrl) {
+  console.error('Missing MAC_MASTRA_BASE_URL. Example: MAC_MASTRA_BASE_URL=http://192.168.1.20:4111');
+  process.exit(1);
+}
 
 const client = new MastraClient({
   baseUrl,
