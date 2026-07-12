@@ -4,7 +4,7 @@ This project can use a local DefraDB node as the Mastra agent workspace. Mastra 
 
 ## 1. Pin one DefraDB version
 
-Install the same exact DefraDB release on the Mac and VM. Do not mix v0.20.x with v1.0 release candidates because their database and CLI contracts differ.
+Install the same exact DefraDB release on the Mac and Windows. Do not mix v0.20.x with v1.0 release candidates because their database and CLI contracts differ.
 
 Verify on both machines:
 
@@ -16,7 +16,7 @@ Record the selected version in deployment configuration before continuing.
 
 ## 2. Start each node
 
-Run a node on the Mac and a separate node on the VM:
+Run a node on the Mac and a separate node on the Windows computer:
 
 ```bash
 defradb start \
@@ -25,7 +25,7 @@ defradb start \
   --p2paddr /ip4/0.0.0.0/tcp/9171
 ```
 
-Keep port 9181 bound to localhost. Permit TCP 9171 only across the network path between the Mac and VM.
+Keep port 9181 bound to localhost. Permit TCP 9171 only across the network path between the Mac and Windows.
 
 ## 3. Configure the application
 
@@ -40,7 +40,7 @@ DEFRA_DB_REQUEST_TIMEOUT_MS=10000
 DEFRA_DB_MAX_FILE_BYTES=10485760
 ```
 
-Use a distinct `DEFRA_DB_NODE_ID=vm` on the VM.
+Use a distinct `DEFRA_DB_NODE_ID=windows` on the Windows computer.
 
 Install the schema on both nodes:
 
@@ -75,7 +75,7 @@ npm run defradb:verify
 
 The default import source is `src/mastra/public/workspace`. Override it with `LOCAL_WORKSPACE_PATH` when necessary.
 
-Wait for replication, then run the verification script on the VM against a copy of the expected workspace or query `WorkspaceEntry` directly.
+Wait for replication, then run the verification script on the Windows computer against a copy of the expected workspace or query `WorkspaceEntry` directly.
 
 ## 6. Cut over
 

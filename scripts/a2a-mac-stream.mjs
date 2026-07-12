@@ -6,7 +6,7 @@ const apiPrefix = process.env.MAC_MASTRA_API_PREFIX ?? '/api';
 const token = process.env.MAC_A2A_TOKEN;
 const prompt =
   process.argv.slice(2).join(' ') ||
-  'Hello from the VM agent. Please reply with a short, friendly response.';
+  'Hello from the Windows agent. Please reply with a short, friendly response.';
 
 if (!baseUrl) {
   console.error('Missing MAC_MASTRA_BASE_URL. Example: MAC_MASTRA_BASE_URL=http://192.168.1.20:4111');

@@ -2,16 +2,16 @@
 import { Mastra } from '@mastra/core/mastra';
 import { PinoLogger } from '@mastra/loggers';
 import { LibSQLStore } from '@mastra/libsql';
-import { vmAgent } from './agents/vm-agent';
+import { windowsAgent } from './agents/windows-agent';
 import { sendToMacAgentTool } from './tools/send-to-mac-agent-tool';
 
 const a2aApiToken = process.env.A2A_API_TOKEN;
 
 export const mastra = new Mastra({
-  agents: { vmAgent },
+  agents: { windowsAgent },
   tools: { sendToMacAgentTool },
   storage: new LibSQLStore({
-    id: 'vm-mastra-storage',
+    id: 'windows-mastra-storage',
     url: 'file:./mastra.db',
   }),
   logger: new PinoLogger({
