@@ -19,7 +19,7 @@ Use Node.js 22.13 or newer.
 Install Ollama for Windows, then run these commands in PowerShell:
 
 ```powershell
-ollama pull qwen3:1.7b
+ollama pull lfm2.5:thinking
 ollama serve
 ```
 
