@@ -1,7 +1,7 @@
 import type { Message, Task, TaskArtifactUpdateEvent, TaskStatusUpdateEvent } from '@mastra/core/a2a/client';
 import { createStep, createWorkflow } from '@mastra/core/workflows';
 import { z } from 'zod';
-import { getVmA2AClient } from '../a2a/vm-client';
+import { getWindowsA2AClient } from '../a2a/windows-client';
 
 const transcriptEntrySchema = z.object({
   speaker: z.string(),
@@ -11,7 +11,7 @@ const transcriptEntrySchema = z.object({
 const conversationInputSchema = z.object({
   opener: z
     .string()
-    .default('Say hello to the VM agent and start a short, friendly small-talk conversation.')
+    .default('Say hello to the Windows agent and start a short, friendly small-talk conversation.')
     .describe('The opening instruction for the MacBook agent'),
   turns: z
     .number()
@@ -43,9 +43,9 @@ function textFromMessageEvent(event: A2AStreamEventData): string {
   return '';
 }
 
-async function sendToVmAgent(prompt: string): Promise<string> {
-  const { vmA2A } = getVmA2AClient();
-  const stream = vmA2A.sendMessageStream({
+async function sendToWindowsAgent(prompt: string): Promise<string> {
+  const { windowsA2A } = getWindowsA2AClient();
+  const stream = windowsA2A.sendMessageStream({
     message: {
       kind: 'message',
       role: 'user',
@@ -76,7 +76,7 @@ async function sendToVmAgent(prompt: string): Promise<string> {
 
 const runA2AConversation = createStep({
   id: 'run-a2a-conversation',
-  description: 'Runs a brief small-talk exchange between the MacBook agent and the VM agent',
+  description: 'Runs a brief small-talk exchange between the MacBook agent and the Windows agent',
   inputSchema: conversationInputSchema,
   outputSchema: conversationOutputSchema,
   execute: async ({ inputData, mastra }) => {
@@ -105,15 +105,15 @@ const runA2AConversation = createStep({
           speaker: 'MacBook A2A Agent',
           message,
         });
-        nextPrompt = `The MacBook agent said: "${message}"\n\nReply as the VM agent with one brief small-talk response.`;
+        nextPrompt = `The MacBook agent said: "${message}"\n\nReply as the Windows agent with one brief small-talk response.`;
       } else {
-        const message = await sendToVmAgent(nextPrompt);
+        const message = await sendToWindowsAgent(nextPrompt);
 
         transcript.push({
-          speaker: 'VM A2A Agent',
+          speaker: 'Windows A2A Agent',
           message,
         });
-        nextPrompt = `The VM agent said: "${message}"\n\nReply as the MacBook agent with one brief small-talk response.`;
+        nextPrompt = `The Windows agent said: "${message}"\n\nReply as the MacBook agent with one brief small-talk response.`;
       }
     }
 

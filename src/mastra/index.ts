@@ -10,14 +10,14 @@ import { a2aConversationWorkflow } from './workflows/a2a-conversation-workflow';
 import { weatherAgent } from './agents/weather-agent';
 import { a2aAgent } from './agents/a2a-agent';
 import { toolCallAppropriatenessScorer, completenessScorer, translationScorer } from './scorers/weather-scorer';
-import { sendToVmAgentTool } from './tools/send-to-vm-agent-tool';
+import { sendToWindowsAgentTool } from './tools/send-to-windows-agent-tool';
 
 const a2aApiToken = process.env.A2A_API_TOKEN;
 
 export const mastra = new Mastra({
   workflows: { weatherWorkflow, a2aConversationWorkflow },
   agents: { weatherAgent, a2aAgent },
-  tools: { sendToVmAgentTool },
+  tools: { sendToWindowsAgentTool },
   scorers: { toolCallAppropriatenessScorer, completenessScorer, translationScorer },
   storage: new MastraCompositeStore({
     id: 'composite-storage',

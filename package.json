@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "mastra dev",
     "build": "mastra build",
-    "a2a:vm:stream": "node --env-file=.env scripts/a2a-vm-stream.mjs",
+    "a2a:windows:stream": "node --env-file=.env scripts/a2a-windows-stream.mjs",
     "defradb:bootstrap": "node --env-file=.env scripts/defradb-bootstrap.mjs",
     "defradb:migrate": "node --env-file=.env scripts/defradb-migrate-workspace.mjs",
     "defradb:verify": "node --env-file=.env scripts/defradb-verify-workspace.mjs",

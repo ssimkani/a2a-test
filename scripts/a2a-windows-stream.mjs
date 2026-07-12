@@ -1,15 +1,17 @@
 import { MastraClient } from '@mastra/client-js';
 
-const baseUrl = process.env.VM_MASTRA_BASE_URL;
-const agentId = process.env.VM_A2A_AGENT_ID ?? 'vm-agent';
-const apiPrefix = process.env.VM_MASTRA_API_PREFIX ?? '/api';
-const token = process.env.VM_A2A_TOKEN;
+const baseUrl = process.env.WINDOWS_MASTRA_BASE_URL;
+const agentId = process.env.WINDOWS_A2A_AGENT_ID ?? 'windows-agent';
+const apiPrefix = process.env.WINDOWS_MASTRA_API_PREFIX ?? '/api';
+const token = process.env.WINDOWS_A2A_TOKEN;
 const prompt =
   process.argv.slice(2).join(' ') ||
   'Hello from my local machine. Please stream back a short response.';
 
 if (!baseUrl) {
-  console.error('Missing VM_MASTRA_BASE_URL. Example: VM_MASTRA_BASE_URL=http://192.168.1.50:4111');
+  console.error(
+    'Missing WINDOWS_MASTRA_BASE_URL. Example: WINDOWS_MASTRA_BASE_URL=http://192.168.21.175:4111',
+  );
   process.exit(1);
 }
 
