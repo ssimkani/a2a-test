@@ -22,7 +22,7 @@ test('Windows workspace is local-only and exposes no tools to the unsupported mo
 
 test('input processor persists and byte-verifies A2A files before inference', async () => {
   const processor = await readFile(resolve(root, 'src/mastra/processors/a2a-file-persistence-processor.ts'), 'utf8');
-  for (const value of ['edge-peer-collaboration/v1', 'received/${envelope.collaborationId}', 'writeFile', 'readFile', 'verified.equals(bytes)', 'TRANSPORT_PERSISTENCE_RECEIPT', 'TRANSPORT_FILE_VERIFIED']) {
+  for (const value of ['edge-peer-collaboration/v1', 'received/${envelope.collaborationId}', 'writeFile', 'readFile', 'verified.equals(bytes)', 'TRANSPORT_PERSISTENCE_RECEIPT', 'TRANSPORT_FILE_VERIFIED', 'TRANSPORT_VERIFIED_FACTS', 'FINAL LINE MUST BE EXACTLY']) {
     assert.ok(processor.includes(value), `missing ${value}`);
   }
 });

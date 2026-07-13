@@ -11,7 +11,7 @@ interface PeerFile {
 interface PeerEnvelope {
   protocol: 'edge-peer-collaboration/v1';
   collaborationId: string;
-  payload?: { stage?: unknown };
+  payload?: { stage?: unknown; macCritique?: unknown };
   files: PeerFile[];
 }
 
@@ -35,14 +35,37 @@ function parseEnvelope(text: string): PeerEnvelope | undefined {
   return envelope as PeerEnvelope;
 }
 
-function appendReceipt(message: ProcessInputArgs['messages'][number], receipt: string) {
+function replaceText(message: ProcessInputArgs['messages'][number], text: string) {
   return {
     ...message,
     content: {
       ...message.content,
-      parts: [...(message.content.parts ?? []), { type: 'text' as const, text: `\n${receipt}` }],
+      parts: [{ type: 'text' as const, text }],
     },
   };
+}
+
+function verifiedFacts(csv: string): string {
+  const [, ...lines] = csv.trim().split(/\r?\n/);
+  const rows = lines.map(line => {
+    const [product, units, revenue, returns] = line.split(',');
+    return { product, units: Number(units), revenue: Number(revenue), returns: Number(returns) };
+  });
+  if (rows.length === 0 || rows.some(row => !row.product || !Number.isFinite(row.units) || !Number.isFinite(row.revenue) || !Number.isFinite(row.returns))) {
+    throw new Error('Saved A2A sales CSV is invalid');
+  }
+  const highestUnits = rows.reduce((best, row) => row.units > best.units ? row : best);
+  const highestRevenue = rows.reduce((best, row) => row.revenue > best.revenue ? row : best);
+  const rates = rows.map(row => ({ ...row, rate: row.returns / row.units * 100 }));
+  const highestRate = rates.reduce((best, row) => row.rate > best.rate ? row : best);
+  const lowestRate = rates.reduce((best, row) => row.rate < best.rate ? row : best);
+  return [
+    `total_revenue=${rows.reduce((sum, row) => sum + row.revenue, 0)}`,
+    `highest_units=${highestUnits.product} (${highestUnits.units})`,
+    `highest_revenue=${highestRevenue.product} (${highestRevenue.revenue})`,
+    `highest_return_rate=${highestRate.product} (${highestRate.returns}/${highestRate.units}= ${highestRate.rate}%)`,
+    `lowest_return_rate=${lowestRate.product} (${lowestRate.returns}/${lowestRate.units}= ${lowestRate.rate}%)`,
+  ].join('\n');
 }
 
 export const a2aFilePersistenceProcessor: InputProcessor = {
@@ -72,7 +95,7 @@ export const a2aFilePersistenceProcessor: InputProcessor = {
       }
 
       const savedDatasetPath = `received/${envelope.collaborationId}/sales-data.csv`;
-      let savedDataset = '';
+      let savedDataset = envelope.files.find(file => file.name === 'sales-data.csv')?.content ?? '';
       if (stage === 'CRITIQUE_AND_REVISE' || stage === 'VERIFY_SAVED_FILE') {
         savedDataset = Buffer.from(await filesystem.readFile(savedDatasetPath, { encoding: 'binary' })).toString('utf8');
       }
@@ -84,7 +107,26 @@ export const a2aFilePersistenceProcessor: InputProcessor = {
         savedDataset ? `TRANSPORT_SAVED_DATASET\n${savedDataset}\nEND_TRANSPORT_SAVED_DATASET` : '',
         stage === 'VERIFY_SAVED_FILE' && savedDataset ? 'TRANSPORT_FILE_VERIFIED' : '',
       ].filter(Boolean).join('\n');
-      return appendReceipt(message, receipt);
+      const marker = stage === 'TRANSFER_AND_ANALYZE'
+        ? 'WINDOWS_TRANSFER_ANALYSIS_COMPLETE'
+        : stage === 'CRITIQUE_AND_REVISE'
+          ? 'WINDOWS_REVISION_COMPLETE'
+          : stage === 'VERIFY_SAVED_FILE'
+            ? 'FILE_VERIFIED'
+            : 'STAGE_COMPLETE';
+      const peerCritique = typeof envelope.payload?.macCritique === 'string'
+        ? envelope.payload.macCritique.slice(0, 1_500)
+        : '';
+      const compactPrompt = [
+        `STAGE=${stage}`,
+        receipt,
+        savedDataset ? `DATASET\n${savedDataset}\nEND_DATASET` : '',
+        savedDataset ? `TRANSPORT_VERIFIED_FACTS\n${verifiedFacts(savedDataset)}` : '',
+        peerCritique ? `MAC_CRITIQUE\n${peerCritique}\nEND_MAC_CRITIQUE` : '',
+        'TASK: State whether you agree with the verified facts. Give one useful business insight. Use only the data above.',
+        `FINAL LINE MUST BE EXACTLY: ${marker}`,
+      ].filter(Boolean).join('\n\n');
+      return replaceText(message, compactPrompt);
     }));
   },
 };
