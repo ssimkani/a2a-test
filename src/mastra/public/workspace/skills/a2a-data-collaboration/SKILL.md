@@ -25,6 +25,8 @@ Use one collaboration ID for the whole run. Do not use DefraDB.
 
 Every numeric claim must cite the source row values. If calculations disagree, recompute from the CSV before reaching consensus.
 
+When a Mac A2A stage embeds the complete CSV in `<dataset>`, analyze that content directly without calling tools. Keep internal reasoning brief, emit at most 12 lines, and put the required marker on the final line.
+
 ## Tool argument reminder
 
 Peer tool fields are top-level: `purpose`, `message`, `payload`, `workspaceFiles`, `collaborationId`, `round`. Never place the entire call inside `data` or `payload`.
