@@ -58,6 +58,21 @@ npm start
 
 Keep the process alive with the Windows computer's Task Scheduler or a Windows service wrapper for long-running use.
 
+Before the live demo, verify the Windows-specific small-model prompt and local-only workspace configuration:
+
+```powershell
+npm test
+npm run demo:dry-run
+```
+
+After the Mac demo prints its collaboration ID, independently prove the A2A file was saved in this Windows workspace:
+
+```powershell
+npm run demo:verify-workspace -- <collaboration-id>
+```
+
+The demo uses A2A and local workspace files only. It does not require or use DefraDB.
+
 ## 5. Verify from the client computer
 
 Find the Windows computer's local peer-to-peer IP address, then check discovery:

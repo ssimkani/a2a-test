@@ -4,14 +4,14 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "npm run demo:test",
     "dev": "mastra dev",
     "build": "mastra build",
     "a2a:windows:stream": "node --env-file=.env scripts/a2a-windows-stream.mjs",
     "a2a:mac:stream": "node --env-file=.env scripts/a2a-mac-stream.mjs",
-    "defradb:bootstrap": "node --env-file=.env scripts/defradb-bootstrap.mjs",
-    "defradb:migrate": "node --env-file=.env scripts/defradb-migrate-workspace.mjs",
-    "defradb:verify": "node --env-file=.env scripts/defradb-verify-workspace.mjs",
+    "demo:dry-run": "node scripts/windows-demo-preflight.mjs",
+    "demo:test": "node --test scripts/tests/*.test.mjs",
+    "demo:verify-workspace": "node scripts/verify-demo-workspace.mjs",
     "start": "mastra start"
   },
   "keywords": [],

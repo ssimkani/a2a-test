@@ -79,6 +79,16 @@ function promptForPeer(
   collaborationId: string,
   envelope: Record<string, unknown>,
 ) {
+  const requiredFileActions = envelope.files instanceof Array && envelope.files.length > 0
+    ? `A2A TRANSPORT FILE PLAN:\n${envelope.files
+        .map((file, index) => {
+          const peerFile = file as { name?: unknown };
+          const name = typeof peerFile.name === 'string' ? peerFile.name : `file-${index + 1}`;
+          return `${index + 1}. Before the model runs, the Windows A2A input processor saves and byte-verifies FILE ${index + 1} at "received/${collaborationId}/${name}".`;
+        })
+        .join('\n')}\nThe processor appends TRANSPORT_PERSISTENCE_RECEIPT only after success.`
+    : 'No files are attached. Do not claim that a file was saved.';
+
   return `[Peer A2A message]
 Source agent: ${options.sourceAgentId}
 Target agent: ${options.targetAgentId}
@@ -88,13 +98,24 @@ Round: ${input.round}/${MAX_COLLABORATION_ROUNDS}
 
 ${input.message}
 
+${requiredFileActions}
+
+STAGE RULES:
+- TRANSFER_AND_ANALYZE: save and verify every file, analyze the data, then include marker WINDOWS_TRANSFER_ANALYSIS_COMPLETE.
+- CRITIQUE_AND_REVISE: read the saved dataset, compare the peer findings, correct mistakes, then include marker WINDOWS_REVISION_COMPLETE.
+- VERIFY_SAVED_FILE: require TRANSPORT_FILE_VERIFIED and include marker FILE_VERIFIED only if it is present.
+- MAC_ANALYSIS_AND_CRITIQUE: independently analyze the data, critique Windows, then include marker MAC_CRITIQUE_COMPLETE.
+- FINAL_CONSENSUS: reconcile both analyses and include marker FINAL_CONSENSUS_COMPLETE.
+
+Windows uses deterministic A2A transport persistence for protocol files. Never request a model tool call for file persistence. Never say a file was saved without TRANSPORT_PERSISTENCE_RECEIPT. Never use DefraDB.
+
 The structured JSON and workspace file payload follows. The file content is embedded in this envelope; the sender's workspace path does not exist in your local workspace. Read text content directly from the envelope. If you need a local copy, write it beneath a2a/inbox/${collaborationId}/. Text files contain UTF-8 content; binary files contain base64 content.
 
 <peer-envelope>
 ${JSON.stringify(envelope, null, 2)}
 </peer-envelope>
 
-Do not initiate another peer call merely to acknowledge this message. If a substantive follow-up is necessary, reuse the collaboration ID and increment the round. Do not continue beyond round ${MAX_COLLABORATION_ROUNDS}.`;
+Return a concise structured response with: stage marker, saved path(s), calculations, insights, disagreements, and limitations as applicable. Do not initiate another peer call merely to acknowledge this message. Reuse the collaboration ID for substantive follow-up and never continue beyond round ${MAX_COLLABORATION_ROUNDS}.`;
 }
 
 export function createPeerA2ATool(options: PeerA2AToolOptions) {
