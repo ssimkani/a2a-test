@@ -79,13 +79,13 @@ function promptForPeer(
   envelope: Record<string, unknown>,
 ) {
   const requiredFileActions = envelope.files instanceof Array && envelope.files.length > 0
-    ? `REQUIRED FILE ACTIONS (do these before analysis):\n${envelope.files
+    ? `A2A TRANSPORT FILE PLAN:\n${envelope.files
         .map((file, index) => {
-          const peerFile = file as { name?: unknown; content?: unknown; encoding?: unknown };
+          const peerFile = file as { name?: unknown };
           const name = typeof peerFile.name === 'string' ? peerFile.name : `file-${index + 1}`;
-          return `${index + 1}. Call save_file with path "received/${collaborationId}/${name}" and the exact decoded file content from FILE ${index + 1} below.`;
+          return `${index + 1}. Before the model runs, the Windows A2A input processor saves and byte-verifies FILE ${index + 1} at "received/${collaborationId}/${name}".`;
         })
-        .join('\n')}\nAfter saving, call read_file on each saved path and verify its content before responding.`
+        .join('\n')}\nThe processor appends TRANSPORT_PERSISTENCE_RECEIPT only after success.`
     : 'No files are attached. Do not claim that a file was saved.';
 
   return `[Peer A2A message]
@@ -102,11 +102,11 @@ ${requiredFileActions}
 STAGE RULES:
 - TRANSFER_AND_ANALYZE: save and verify every file, analyze the data, then include marker WINDOWS_TRANSFER_ANALYSIS_COMPLETE.
 - CRITIQUE_AND_REVISE: compare the peer findings with the saved dataset, correct mistakes, then include marker WINDOWS_REVISION_COMPLETE.
-- VERIFY_SAVED_FILE: call read_file on the requested received path and include marker FILE_VERIFIED only if the content is present.
+- VERIFY_SAVED_FILE: require TRANSPORT_FILE_VERIFIED and include marker FILE_VERIFIED only if it is present.
 - MAC_ANALYSIS_AND_CRITIQUE: independently analyze the embedded data, critique Windows, then include marker MAC_CRITIQUE_COMPLETE.
 - FINAL_CONSENSUS: reconcile both analyses and include marker FINAL_CONSENSUS_COMPLETE.
 
-Never skip a required tool call. Never say a file was saved unless save_file succeeded. Never use DefraDB.
+The Windows 230M model does not support tools. Never request a Windows model tool call. Never say a file was saved without TRANSPORT_PERSISTENCE_RECEIPT. Never use DefraDB.
 
 The structured JSON and workspace file payload follows. The file content is embedded in this envelope; the sender's workspace path does not exist in your local workspace. Read text content directly from the envelope. If you need a local copy, write it beneath a2a/inbox/${collaborationId}/. Text files contain UTF-8 content; binary files contain base64 content.
 
