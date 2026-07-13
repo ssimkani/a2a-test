@@ -41,6 +41,8 @@ npm run demo:a2a
 
 The command stops immediately if any stage omits its required marker. On success it writes a consensus report beneath `src/mastra/public/workspace/demo-output/` and prints the collaboration ID.
 
+To simulate autonomous orchestration by prompting the Mac agent directly in Mastra Studio, use the copy-paste prompt in [`mac-agent-demo-prompt.md`](./mac-agent-demo-prompt.md).
+
 On Windows, prove that the transferred file exists independently of the model response:
 
 ```bash
