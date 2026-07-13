@@ -1,4 +1,4 @@
-import { LocalFilesystem, Workspace, WORKSPACE_TOOLS } from '@mastra/core/workspace';
+import { LocalFilesystem, Workspace } from '@mastra/core/workspace';
 
 export const windowsAgentWorkspace = new Workspace({
   id: 'windows-agent-workspace',
@@ -10,8 +10,5 @@ export const windowsAgentWorkspace = new Workspace({
   }),
   tools: {
     enabled: false,
-    [WORKSPACE_TOOLS.FILESYSTEM.READ_FILE]: { enabled: true, name: 'read_file' },
-    [WORKSPACE_TOOLS.FILESYSTEM.WRITE_FILE]: { enabled: true, name: 'save_file' },
-    [WORKSPACE_TOOLS.FILESYSTEM.LIST_FILES]: { enabled: true, name: 'list_files' },
   },
 });

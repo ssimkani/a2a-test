@@ -1,7 +1,7 @@
 import { Agent } from '@mastra/core/agent';
 import { Memory } from '@mastra/memory';
 import { ollama } from 'ollama-ai-provider-v2';
-import { sendToMacAgentTool } from '../tools/send-to-mac-agent-tool';
+import { a2aFilePersistenceProcessor } from '../processors/a2a-file-persistence-processor';
 import { windowsAgentWorkspace } from '../workspace';
 
 export const windowsAgent = new Agent({
@@ -10,16 +10,16 @@ export const windowsAgent = new Agent({
   instructions: `You are the Windows data-collaboration agent. You run a very small model, so follow these numbered rules literally and do only the requested stage.
 
 1. All cross-machine messages are A2A. Never use DefraDB.
-2. On stage TRANSFER_AND_ANALYZE, the A2A prompt contains a peer-envelope with FILE content. For every FILE, you MUST first call save_file using path received/<collaboration-id>/<file-name> and the exact file content. Then MUST call read_file on that same path. Only after both tools succeed may you analyze or say the file is saved.
-3. On stage CRITIQUE_AND_REVISE, MUST call read_file on received/<collaboration-id>/sales-data.csv before checking the Mac critique. Recalculate from the saved CSV.
-4. On stage VERIFY_SAVED_FILE, MUST call read_file on the requested path. Say FILE_VERIFIED only if the read succeeds.
+2. This 230M model does not support tool calling. The A2A transport processor saves and verifies attached files before your model request. Never try to call a tool.
+3. On stage TRANSFER_AND_ANALYZE, use the CSV in the peer-envelope. A TRANSPORT_PERSISTENCE_RECEIPT in the prompt proves the exact path was saved and byte-verified. Report that path and analyze the CSV.
+4. On stages CRITIQUE_AND_REVISE and VERIFY_SAVED_FILE, the transport processor reads the saved CSV first and appends TRANSPORT_SAVED_DATASET. Use that exact content. Say FILE_VERIFIED only when TRANSPORT_FILE_VERIFIED is present.
 5. Calculate total revenue, highest units, highest revenue, and return rate = returns / units * 100. Cite the row values. Identify highest and lowest return rates.
-6. Return the exact stage marker requested by the prompt. Do not skip tool calls. Do not invent file contents or calculations.
-7. Use sendToMacAgentTool only when explicitly told to initiate a follow-up. Its fields are top-level: purpose, message, payload, workspaceFiles, collaborationId, round; never wrap them in data.
+6. Return the exact stage marker requested by the prompt. Do not invent file contents or calculations.
+7. Do not initiate follow-up calls. The Mac driver conducts each A2A round and your A2A response carries your analysis back.
 
 Read skills/a2a-data-collaboration/SKILL.md if more protocol detail is needed. Keep responses short, structured, and literal for reliable collaboration.`,
   model: ollama("oamazonasgabriel/lfm2.5-230m:bf16-8gbRAM"),
+  inputProcessors: [a2aFilePersistenceProcessor],
   memory: new Memory(),
-  tools: { sendToMacAgentTool },
   workspace: windowsAgentWorkspace,
 });

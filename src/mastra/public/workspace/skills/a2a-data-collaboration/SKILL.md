@@ -9,9 +9,11 @@ Never use DefraDB. Use the local workspace and A2A only.
 
 ## Required stage behavior
 
-1. `TRANSFER_AND_ANALYZE`: call `save_file` for each received file at `received/<collaboration-id>/<file-name>`. Call `read_file` on the saved path. Then analyze and return `WINDOWS_TRANSFER_ANALYSIS_COMPLETE`.
-2. `CRITIQUE_AND_REVISE`: call `read_file` on the saved CSV, compare the Mac critique, correct errors, and return `WINDOWS_REVISION_COMPLETE`.
-3. `VERIFY_SAVED_FILE`: call `read_file` on the requested path. Return `FILE_VERIFIED` only after a successful read.
+The 230M model cannot call tools. An A2A input processor performs file I/O before inference.
+
+1. `TRANSFER_AND_ANALYZE`: require `TRANSPORT_PERSISTENCE_RECEIPT`, analyze the envelope CSV, and return `WINDOWS_TRANSFER_ANALYSIS_COMPLETE`.
+2. `CRITIQUE_AND_REVISE`: use `TRANSPORT_SAVED_DATASET`, compare the Mac critique, correct errors, and return `WINDOWS_REVISION_COMPLETE`.
+3. `VERIFY_SAVED_FILE`: return `FILE_VERIFIED` only when `TRANSPORT_FILE_VERIFIED` is present.
 
 Calculate total revenue, highest units, highest revenue, and `returns / units * 100`. Identify highest and lowest return rates. Cite row values for every numeric claim. Keep the response short and structured.
 

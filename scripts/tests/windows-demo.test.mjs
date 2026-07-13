@@ -5,27 +5,25 @@ import { test } from 'node:test';
 
 const root = resolve(import.meta.dirname, '../..');
 
-test('Windows 230M agent has literal save, read, analyze, and marker instructions', async () => {
+test('Windows 230M agent is tool-less and has literal transport, analyze, and marker instructions', async () => {
   const agent = await readFile(resolve(root, 'src/mastra/agents/windows-agent.ts'), 'utf8');
   assert.match(agent, /oamazonasgabriel\/lfm2\.5-230m:bf16-8gbRAM/);
-  for (const value of ['TRANSFER_AND_ANALYZE', 'save_file', 'read_file', 'CRITIQUE_AND_REVISE', 'VERIFY_SAVED_FILE', 'FILE_VERIFIED']) {
+  for (const value of ['TRANSFER_AND_ANALYZE', 'TRANSPORT_PERSISTENCE_RECEIPT', 'CRITIQUE_AND_REVISE', 'TRANSPORT_SAVED_DATASET', 'VERIFY_SAVED_FILE', 'FILE_VERIFIED']) {
     assert.match(agent, new RegExp(value));
   }
+  assert.doesNotMatch(agent, /tools:/);
 });
 
-test('Windows workspace is local-only with a narrow small-model tool surface', async () => {
+test('Windows workspace is local-only and exposes no tools to the unsupported model', async () => {
   const workspace = await readFile(resolve(root, 'src/mastra/workspace.ts'), 'utf8');
   assert.doesNotMatch(workspace, /DefraDb|WORKSPACE_BACKEND/);
-  assert.match(workspace, /name: 'read_file'/);
-  assert.match(workspace, /name: 'save_file'/);
-  assert.match(workspace, /name: 'list_files'/);
   assert.match(workspace, /enabled: false/);
 });
 
-test('peer prompt requires file persistence before analysis', async () => {
-  const peerTool = await readFile(resolve(root, 'src/mastra/tools/peer-a2a-tool.ts'), 'utf8');
-  for (const value of ['REQUIRED FILE ACTIONS', 'received/${collaborationId}', 'save_file', 'read_file', 'WINDOWS_TRANSFER_ANALYSIS_COMPLETE', 'Never use DefraDB']) {
-    assert.ok(peerTool.includes(value), `missing ${value}`);
+test('input processor persists and byte-verifies A2A files before inference', async () => {
+  const processor = await readFile(resolve(root, 'src/mastra/processors/a2a-file-persistence-processor.ts'), 'utf8');
+  for (const value of ['edge-peer-collaboration/v1', 'received/${envelope.collaborationId}', 'writeFile', 'readFile', 'verified.equals(bytes)', 'TRANSPORT_PERSISTENCE_RECEIPT', 'TRANSPORT_FILE_VERIFIED']) {
+    assert.ok(processor.includes(value), `missing ${value}`);
   }
 });
 
