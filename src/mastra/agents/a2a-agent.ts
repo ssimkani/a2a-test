@@ -20,7 +20,7 @@ FOLLOW THESE RULES LITERALLY:
 
 For staged A2A requests, keep internal reasoning brief, emit only the concise final analysis, use at most 12 lines, and return the requested marker exactly as the final line.
 Read skills/a2a-data-collaboration/SKILL.md when you need the full protocol.`,
-  model: ollama('lfm2.5-thinking'),
+  model: ollama('qwen3.5:2b'),
   defaultOptions: {
     modelSettings: { maxOutputTokens: 8192 },
   },

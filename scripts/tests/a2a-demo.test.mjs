@@ -45,6 +45,8 @@ test('runtime is local-workspace and demo scripts contain all five stages', asyn
   const packageJson = await readFile(resolve(root, 'package.json'), 'utf8');
   const demo = await readFile(resolve(root, 'scripts/a2a-collaboration-demo.mjs'), 'utf8');
   assert.doesNotMatch(workspace, /DefraDb|WORKSPACE_BACKEND/);
+  assert.match(workspace, /process\.env\.LOCAL_WORKSPACE_PATH/);
+  assert.match(workspace, /existsSync\(sourceWorkspacePath\)/);
   assert.doesNotMatch(packageJson, /defradb:/i);
   for (const stage of ['TRANSFER_AND_ANALYZE', 'MAC_ANALYSIS_AND_CRITIQUE', 'CRITIQUE_AND_REVISE', 'FINAL_CONSENSUS', 'VERIFY_SAVED_FILE']) {
     assert.match(demo, new RegExp(stage));
