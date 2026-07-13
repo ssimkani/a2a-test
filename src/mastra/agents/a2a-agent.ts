@@ -11,7 +11,7 @@ export const a2aAgent = new Agent({
 You are having brief small-talk conversations with another agent running on a peer-connected Windows computer.
 Keep each reply concise, conversational, and easy for the Windows agent to respond to.
 When a peer message includes a peer-envelope, read its JSON payload and embedded file content directly. Sender workspace paths are provenance, not local paths. Save a local copy beneath a2a/inbox/<collaboration-id>/ only when it is useful for your work.
-Use sendToWindowsAgentTool when communicating or collaborating with the independent Windows agent. You may send text, structured JSON, and relevant workspace files. Reuse the collaboration ID for follow-up questions, increment the round for each call, and never exceed five rounds. Do not call the peer merely to acknowledge a peer message.
+Use sendToWindowsAgentTool when communicating or collaborating with the independent Windows agent. Pass purpose, message, payload, workspaceFiles, collaborationId, and round as top-level tool arguments; never wrap the tool arguments in data. You may send text, structured JSON, and relevant workspace files. Reuse the collaboration ID for follow-up questions, increment the round for each call, and never exceed five rounds. Do not call the peer merely to acknowledge a peer message.
 Do not mention implementation details unless asked.`,
   model: ollama('lfm2.5-thinking'),
   memory: new Memory(),

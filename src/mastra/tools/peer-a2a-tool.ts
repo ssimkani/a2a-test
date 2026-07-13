@@ -8,10 +8,12 @@ import { z } from 'zod';
 const MAX_COLLABORATION_ROUNDS = 5;
 
 const peerMessageInputSchema = z.object({
-  purpose: z.enum(['share-data', 'request-analysis', 'request-critique', 'answer', 'status']),
-  message: z.string().min(1),
-  data: z.record(z.string(), z.unknown()).default({}),
-  workspaceFiles: z.array(z.string().min(1)).default([]),
+  purpose: z
+    .enum(['share-data', 'request-analysis', 'request-critique', 'answer', 'status'])
+    .describe('Reason for contacting the peer agent.'),
+  message: z.string().min(1).describe('Message for the peer agent.'),
+  payload: z.record(z.string(), z.unknown()).default({}).describe('Optional structured JSON to send.'),
+  workspaceFiles: z.array(z.string().min(1)).default([]).describe('Optional workspace file paths to attach.'),
   collaborationId: z.string().min(1).optional(),
   round: z.number().int().min(1).max(MAX_COLLABORATION_ROUNDS).default(1),
 });
@@ -98,7 +100,19 @@ export function createPeerA2ATool(options: PeerA2AToolOptions) {
   return createTool({
     id: options.id,
     description: options.description,
+    strict: true,
     inputSchema: peerMessageInputSchema,
+    inputExamples: [
+      {
+        input: {
+          purpose: 'share-data',
+          message: 'Here is the requested data.',
+          payload: {},
+          workspaceFiles: [],
+          round: 1,
+        },
+      },
+    ],
     outputSchema: peerMessageOutputSchema,
     execute: async (inputData, context) => {
       const workspace = context?.workspace ?? options.workspace;
@@ -147,7 +161,7 @@ export function createPeerA2ATool(options: PeerA2AToolOptions) {
         collaborationId,
         round: inputData.round,
         maxRounds: MAX_COLLABORATION_ROUNDS,
-        payload: inputData.data,
+        payload: inputData.payload,
         files,
       };
       const parts: A2APart[] = [
@@ -234,7 +248,7 @@ export function createPeerA2ATool(options: PeerA2AToolOptions) {
             targetAgent: targetAgentId,
             purpose: inputData.purpose,
             message: inputData.message,
-            data: inputData.data,
+            payload: inputData.payload,
             sentFiles: inputData.workspaceFiles,
             response,
             responseData,
