@@ -18,7 +18,7 @@ export const windowsAgent = new Agent({
 7. Do not initiate follow-up calls. The Mac driver conducts each A2A round and your A2A response carries your analysis back.
 
 Read skills/a2a-data-collaboration/SKILL.md if more protocol detail is needed. Keep responses short, structured, and literal for reliable collaboration.`,
-  model: ollama("oamazonasgabriel/lfm2.5-230m:bf16-8gbRAM"),
+  model: ollama.completion(process.env.OLLAMA_MODEL ?? 'oamazonasgabriel/lfm2.5-230m:bf16-8gbRAM'),
   inputProcessors: [a2aFilePersistenceProcessor],
   memory: new Memory(),
   workspace: windowsAgentWorkspace,

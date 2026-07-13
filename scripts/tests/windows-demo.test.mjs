@@ -8,6 +8,7 @@ const root = resolve(import.meta.dirname, '../..');
 test('Windows 230M agent is tool-less and has literal transport, analyze, and marker instructions', async () => {
   const agent = await readFile(resolve(root, 'src/mastra/agents/windows-agent.ts'), 'utf8');
   assert.match(agent, /oamazonasgabriel\/lfm2\.5-230m:bf16-8gbRAM/);
+  assert.match(agent, /ollama\.completion/);
   for (const value of ['TRANSFER_AND_ANALYZE', 'TRANSPORT_PERSISTENCE_RECEIPT', 'CRITIQUE_AND_REVISE', 'TRANSPORT_SAVED_DATASET', 'VERIFY_SAVED_FILE', 'FILE_VERIFIED']) {
     assert.match(agent, new RegExp(value));
   }
