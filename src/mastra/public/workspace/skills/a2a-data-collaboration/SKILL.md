@@ -9,7 +9,7 @@ Never use DefraDB. Use the local workspace and A2A only.
 
 ## Required stage behavior
 
-The 230M model cannot call tools. An A2A input processor performs file I/O before inference.
+An A2A input processor performs protocol file I/O and byte verification before inference.
 
 1. `TRANSFER_AND_ANALYZE`: require `TRANSPORT_PERSISTENCE_RECEIPT`, analyze the envelope CSV, and return `WINDOWS_TRANSFER_ANALYSIS_COMPLETE`.
 2. `CRITIQUE_AND_REVISE`: use `TRANSPORT_SAVED_DATASET`, compare the Mac critique, correct errors, and return `WINDOWS_REVISION_COMPLETE`.

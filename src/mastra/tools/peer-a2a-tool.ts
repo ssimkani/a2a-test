@@ -107,7 +107,7 @@ STAGE RULES:
 - MAC_ANALYSIS_AND_CRITIQUE: independently analyze the data, critique Windows, then include marker MAC_CRITIQUE_COMPLETE.
 - FINAL_CONSENSUS: reconcile both analyses and include marker FINAL_CONSENSUS_COMPLETE.
 
-The Windows 230M model does not support tools. Never request a model tool call. Never say a file was saved without TRANSPORT_PERSISTENCE_RECEIPT. Never use DefraDB.
+Windows uses deterministic A2A transport persistence for protocol files. Never request a model tool call for file persistence. Never say a file was saved without TRANSPORT_PERSISTENCE_RECEIPT. Never use DefraDB.
 
 The structured JSON and workspace file payload follows. The file content is embedded in this envelope; the sender's workspace path does not exist in your local workspace. Read text content directly from the envelope. If you need a local copy, write it beneath a2a/inbox/${collaborationId}/. Text files contain UTF-8 content; binary files contain base64 content.
 

@@ -9,4 +9,4 @@ for (const value of required) {
   if (!agent.includes(value) && !processor.includes(value)) throw new Error(`Missing Windows demo instruction: ${value}`);
 }
 if (/DefraDb|WORKSPACE_BACKEND/.test(workspace)) throw new Error('Windows workspace is not local-only');
-console.log(JSON.stringify({ ready: true, toolCalling: false, persistence: 'A2A input processor', model: 'oamazonasgabriel/lfm2.5-230m:bf16-8gbRAM', required }, null, 2));
+console.log(JSON.stringify({ ready: true, modelToolsExposed: false, persistence: 'A2A input processor', model: 'lfm2.5-thinking', required }, null, 2));

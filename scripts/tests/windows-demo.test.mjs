@@ -5,17 +5,17 @@ import { test } from 'node:test';
 
 const root = resolve(import.meta.dirname, '../..');
 
-test('Windows 230M agent is tool-less and has literal transport, analyze, and marker instructions', async () => {
+test('Windows thinking agent uses deterministic transport and literal stage instructions', async () => {
   const agent = await readFile(resolve(root, 'src/mastra/agents/windows-agent.ts'), 'utf8');
-  assert.match(agent, /oamazonasgabriel\/lfm2\.5-230m:bf16-8gbRAM/);
-  assert.match(agent, /ollama\.completion/);
+  assert.match(agent, /ollama\(process\.env\.OLLAMA_MODEL \?\? 'lfm2\.5-thinking'\)/);
+  assert.doesNotMatch(agent, /ollama\.completion/);
   for (const value of ['TRANSFER_AND_ANALYZE', 'TRANSPORT_PERSISTENCE_RECEIPT', 'CRITIQUE_AND_REVISE', 'TRANSPORT_SAVED_DATASET', 'VERIFY_SAVED_FILE', 'FILE_VERIFIED']) {
     assert.match(agent, new RegExp(value));
   }
   assert.doesNotMatch(agent, /tools:/);
 });
 
-test('Windows workspace is local-only and exposes no tools to the unsupported model', async () => {
+test('Windows workspace is local-only and leaves protocol persistence to the input processor', async () => {
   const workspace = await readFile(resolve(root, 'src/mastra/workspace.ts'), 'utf8');
   assert.doesNotMatch(workspace, /DefraDb|WORKSPACE_BACKEND/);
   assert.match(workspace, /enabled: false/);
