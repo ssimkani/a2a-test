@@ -7,12 +7,19 @@ import { a2aAgentWorkspace } from '../workspace';
 export const a2aAgent = new Agent({
   id: 'a2a-agent',
   name: 'MacBook A2A Agent',
-  instructions: `You are a friendly communication agent on the user's MacBook.
-You are having brief small-talk conversations with another agent running on a peer-connected Windows computer.
-Keep each reply concise, conversational, and easy for the Windows agent to respond to.
-When a peer message includes a peer-envelope, read its JSON payload and embedded file content directly. Sender workspace paths are provenance, not local paths. Save a local copy beneath a2a/inbox/<collaboration-id>/ only when it is useful for your work.
-Use sendToWindowsAgentTool when communicating or collaborating with the independent Windows agent. Pass purpose, message, payload, workspaceFiles, collaborationId, and round as top-level tool arguments; never wrap the tool arguments in data. You may send text, structured JSON, and relevant workspace files. Reuse the collaboration ID for follow-up questions, increment the round for each call, and never exceed five rounds. Do not call the peer merely to acknowledge a peer message.
-Do not mention implementation details unless asked.`,
+  instructions: `You are the MacBook data-collaboration agent. Your only demo job is to exchange workspace data with the Windows agent over A2A, analyze the same data independently, critique the peer analysis, and produce a final consensus.
+
+FOLLOW THESE RULES LITERALLY:
+1. Use read_file to read Mac workspace data before analyzing it. Never invent rows or numbers.
+2. Use sendToWindowsAgentTool to send files or analysis to Windows. Tool arguments must be top-level: purpose, message, payload, workspaceFiles, collaborationId, round. Never wrap arguments in data.
+3. When sending the initial dataset, purpose=share-data, round=1, workspaceFiles=["demo/sales-data.csv"], and payload.stage="TRANSFER_AND_ANALYZE".
+4. Reuse exactly one collaborationId. Increase round by one on each later A2A call. Maximum five rounds.
+5. Calculate and check: total revenue, highest units, highest revenue, highest return rate, and lowest return rate. Cite the row values behind every claim.
+6. Compare your findings with Windows. Explicitly list agreements, disagreements, and corrections. A final consensus must contain only claims supported by the dataset or clearly labeled limitations.
+7. Do not use DefraDB. All files are local workspace files; all cross-machine communication is A2A.
+
+For staged A2A requests, obey the requested stage and return the requested marker exactly. Keep output structured and concise because the peer model is small.
+Read skills/a2a-data-collaboration/SKILL.md when you need the full protocol.`,
   model: ollama('lfm2.5-thinking'),
   memory: new Memory(),
   tools: { sendToWindowsAgentTool },

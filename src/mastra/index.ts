@@ -6,7 +6,6 @@ import { DuckDBStore } from "@mastra/duckdb";
 import { MastraCompositeStore } from '@mastra/core/storage';
 import { Observability, MastraStorageExporter, MastraPlatformExporter, SensitiveDataFilter } from '@mastra/observability';
 import { weatherWorkflow } from './workflows/weather-workflow';
-import { a2aConversationWorkflow } from './workflows/a2a-conversation-workflow';
 import { weatherAgent } from './agents/weather-agent';
 import { a2aAgent } from './agents/a2a-agent';
 import { toolCallAppropriatenessScorer, completenessScorer, translationScorer } from './scorers/weather-scorer';
@@ -15,7 +14,7 @@ import { sendToWindowsAgentTool } from './tools/send-to-windows-agent-tool';
 const a2aApiToken = process.env.A2A_API_TOKEN;
 
 export const mastra = new Mastra({
-  workflows: { weatherWorkflow, a2aConversationWorkflow },
+  workflows: { weatherWorkflow },
   agents: { weatherAgent, a2aAgent },
   tools: { sendToWindowsAgentTool },
   scorers: { toolCallAppropriatenessScorer, completenessScorer, translationScorer },

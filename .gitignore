@@ -17,3 +17,7 @@ src/mastra/public/*.duckdb.*
 # Persistent agent workspace contents
 src/mastra/public/workspace/*
 !src/mastra/public/workspace/.gitkeep
+!src/mastra/public/workspace/demo/
+!src/mastra/public/workspace/demo/**
+!src/mastra/public/workspace/skills/
+!src/mastra/public/workspace/skills/**
