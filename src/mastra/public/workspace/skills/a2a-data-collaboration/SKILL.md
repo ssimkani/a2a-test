@@ -9,7 +9,7 @@ Use one collaboration ID for the whole run. Do not use DefraDB.
 
 ## Stages
 
-1. `TRANSFER_AND_ANALYZE`: Mac reads `demo/sales-data.csv` and calls `sendToWindowsAgentTool` with `purpose: share-data`, the file in `workspaceFiles`, round 1, and the stage in `payload`. The Windows A2A input processor saves and byte-verifies `received/<collaboration-id>/sales-data.csv` before the tool-less 230M model runs. Windows analyzes it and returns `WINDOWS_TRANSFER_ANALYSIS_COMPLETE`.
+1. `TRANSFER_AND_ANALYZE`: Mac reads `demo/sales-data.csv` and calls `sendToWindowsAgentTool` with `purpose: share-data`, the file in `workspaceFiles`, round 1, and the stage in `payload`. The Windows A2A input processor saves and byte-verifies `received/<collaboration-id>/sales-data.csv` before the model runs. Windows analyzes it and returns `WINDOWS_TRANSFER_ANALYSIS_COMPLETE`.
 2. `MAC_ANALYSIS_AND_CRITIQUE`: Mac independently calculates totals and rates, compares Windows findings, and returns `MAC_CRITIQUE_COMPLETE`.
 3. `CRITIQUE_AND_REVISE`: Windows reads its saved file, checks Mac's critique, revises its findings, and returns `WINDOWS_REVISION_COMPLETE`.
 4. `FINAL_CONSENSUS`: Mac reconciles both analyses, lists supported findings and limitations, and returns `FINAL_CONSENSUS_COMPLETE`.

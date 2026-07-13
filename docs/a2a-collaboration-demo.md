@@ -6,7 +6,7 @@ This demo uses two independent local Mastra workspaces and A2A communication. It
 
 1. The Mac workspace contains `demo/sales-data.csv`.
 2. The registered Mac tool reads that file and sends its content to `windows-agent` over A2A.
-3. Because the exact 230M model does not support tools, a Windows A2A input processor writes `received/<collaboration-id>/sales-data.csv` in its own local workspace and byte-verifies it before inference.
+3. A Windows A2A input processor writes `received/<collaboration-id>/sales-data.csv` in its own local workspace and byte-verifies it before inference, so protocol-critical persistence does not depend on a model tool call.
 4. Windows analyzes the data, Mac independently analyzes and critiques it, Windows revises, and Mac writes a final consensus.
 5. A final A2A stage makes Windows read its saved copy again. The separate Windows verification script checks the file directly.
 
