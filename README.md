@@ -1,5 +1,10 @@
 # a2a-test
 
+This repository contains two complementary edge-AI demonstrations:
+
+- The existing Mastra A2A data-collaboration demo.
+- An OrbitDB-backed Mastra [kill-switch workflow demonstration](docs/orbitdb-kill-switch-demo.md) that resumes structured SITREP processing after loss of the original node.
+
 Welcome to your new [Mastra](https://mastra.ai/) project! We're excited to see what you'll build.
 
 ## Getting Started

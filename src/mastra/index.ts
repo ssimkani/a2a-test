@@ -6,13 +6,35 @@ import { weatherAgent } from './agents/weather-agent';
 import { a2aAgent } from './agents/a2a-agent';
 import { toolCallAppropriatenessScorer, completenessScorer, translationScorer } from './scorers/weather-scorer';
 import { sendToWindowsAgentTool } from './tools/send-to-windows-agent-tool';
+import { killSwitchWorkflow } from './workflows/kill-switch-workflow';
+import { killSwitchSitrepAgent } from './agents/kill-switch-sitrep-agent';
 
 const a2aApiToken = process.env.A2A_API_TOKEN;
 
 export const mastra = new Mastra({
-  bundler: { externals: false },
-  workflows: { weatherWorkflow },
-  agents: { weatherAgent, a2aAgent },
+  // OrbitDB persists through Level-backed packages that Mastra should install
+  // beside the server rather than inline into its JavaScript bundle. Keep the
+  // Ollama provider bundled because the current app also carries older Mastra
+  // dependencies with a different optional Zod peer range.
+  bundler: {
+    externals: [
+      '@orbitdb/core',
+      'helia',
+      '@helia/bitswap',
+      '@helia/libp2p',
+      'blockstore-level',
+      'datastore-level',
+      '@libp2p/gossipsub',
+      '@chainsafe/libp2p-noise',
+      '@chainsafe/libp2p-yamux',
+      '@libp2p/identify',
+      '@libp2p/tcp',
+      '@ipld/dag-cbor',
+      '@multiformats/multiaddr',
+    ],
+  },
+  workflows: { weatherWorkflow, killSwitchWorkflow },
+  agents: { weatherAgent, a2aAgent, killSwitchSitrepAgent },
   tools: { sendToWindowsAgentTool },
   scorers: { toolCallAppropriatenessScorer, completenessScorer, translationScorer },
   logger: new PinoLogger({
