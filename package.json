@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "npm run demo:test",
+    "test": "npm run demo:test && npm run kill-switch:test",
     "dev": "mastra dev",
     "build": "mastra build",
     "a2a:windows:stream": "node --env-file=.env scripts/a2a-windows-stream.mjs",
@@ -12,6 +12,9 @@
     "demo:dry-run": "node scripts/windows-demo-preflight.mjs",
     "demo:test": "node --test scripts/tests/*.test.mjs",
     "demo:verify-workspace": "node scripts/verify-demo-workspace.mjs",
+    "kill-switch:watch": "node --env-file=.env --import tsx src/mastra/scripts/watcher.ts",
+    "kill-switch:start": "node --env-file=.env --import tsx src/mastra/scripts/watcher.ts --start-task",
+    "kill-switch:test": "node --import tsx --test scripts/tests/kill-switch-state.test.ts",
     "start": "mastra start"
   },
   "keywords": [],
@@ -22,6 +25,14 @@
     "node": ">=22.13.0"
   },
   "dependencies": {
+    "@chainsafe/libp2p-noise": "^17.0.0",
+    "@chainsafe/libp2p-yamux": "^8.0.1",
+    "@helia/bitswap": "^4.0.6",
+    "@helia/libp2p": "^1.0.6",
+    "@ipld/dag-cbor": "^10.0.1",
+    "@libp2p/gossipsub": "^16.0.4",
+    "@libp2p/identify": "^4.1.9",
+    "@libp2p/tcp": "^11.0.23",
     "@mastra/client-js": "^1.31.1",
     "@mastra/core": "^1.50.1",
     "@mastra/duckdb": "^1.5.1",
@@ -30,13 +41,19 @@
     "@mastra/loggers": "^1.2.0",
     "@mastra/memory": "^1.22.2",
     "@mastra/observability": "^1.16.0",
+    "@multiformats/multiaddr": "^13.0.3",
+    "@orbitdb/core": "^4.0.0",
     "ai-sdk-ollama": "^4.0.0",
+    "blockstore-level": "^4.0.1",
+    "datastore-level": "^13.0.1",
+    "helia": "^7.1.0",
     "ollama-ai-provider-v2": "^4.0.1",
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/node": "^26.1.1",
     "mastra": "^1.18.2",
+    "tsx": "^4.23.1",
     "typescript": "^7.0.2"
   }
 }
