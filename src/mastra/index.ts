@@ -1,5 +1,6 @@
 
 import { Mastra } from '@mastra/core/mastra';
+import { LibSQLStore } from '@mastra/libsql';
 import { PinoLogger } from '@mastra/loggers';
 import { windowsAgent } from './agents/windows-agent';
 import { killSwitchWorkflow } from './workflows/kill-switch-workflow';
@@ -27,8 +28,13 @@ export const mastra = new Mastra({
       '@libp2p/tcp',
       '@ipld/dag-cbor',
       '@multiformats/multiaddr',
+      '@mastra/libsql',
     ],
   },
+  storage: new LibSQLStore({
+    id: 'a2a-test-mastra-storage',
+    url: process.env.MASTRA_STORAGE_URL ?? 'file:./mastra.db',
+  }),
   workflows: { killSwitchWorkflow },
   agents: { windowsAgent, killSwitchSitrepAgent },
   logger: new PinoLogger({
