@@ -92,9 +92,15 @@ Install and verify:
 ```bash
 npm install
 ollama pull qwen3.5:2b
-npm test
-npm run build
+npm run framework:test
 ```
+
+`framework:test` is a cross-platform end-to-end preflight. It validates the
+dependency tree, TypeScript, all repository tests, the production build, a real
+two-node OrbitDB replication and failover claim, a native Ollama inference, and
+an actual `npm run dev` startup/API/shutdown cycle. It fails with an actionable
+message if port 4111 is already occupied. Use `npm run framework:smoke` to skip
+only the production build during a quicker rehearsal.
 
 Keep Ollama running on each machine. Depending on the installation, launching the Ollama desktop application starts the service. Otherwise:
 

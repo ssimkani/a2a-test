@@ -15,6 +15,8 @@
     "kill-switch:watch": "node --env-file=.env --import tsx src/mastra/scripts/watcher.ts",
     "kill-switch:start": "node --env-file=.env --import tsx src/mastra/scripts/watcher.ts --start-task",
     "kill-switch:test": "node --import tsx --test scripts/tests/kill-switch-state.test.ts",
+    "framework:test": "node --env-file-if-exists=.env scripts/framework-test.mjs",
+    "framework:smoke": "node --env-file-if-exists=.env scripts/framework-test.mjs --skip-build",
     "start": "cross-env MASTRA_SKIP_PEERDEP_CHECK=1 mastra start"
   },
   "keywords": [],
