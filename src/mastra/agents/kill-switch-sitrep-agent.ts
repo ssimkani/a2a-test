@@ -2,7 +2,7 @@ import { Agent } from '@mastra/core/agent';
 import { createOllama } from 'ollama-ai-provider-v2';
 
 const ollama = createOllama({
-  baseURL: process.env.OLLAMA_BASE_URL?.trim() || 'http://127.0.0.1:11434/api',
+  baseURL: 'http://127.0.0.1:11434/api',
 });
 
 export const killSwitchSitrepAgent = new Agent({
@@ -12,7 +12,7 @@ export const killSwitchSitrepAgent = new Agent({
 
 This is demonstration scaffolding. The operator will replace these instructions with the approved mission prompt.
 Return only the requested fields. Do not invent details; use "unknown" when the transcript does not provide a value.`,
-  model: ollama(process.env.KILL_SWITCH_OLLAMA_MODEL?.trim() || 'qwen3.5:2b'),
+  model: ollama('qwen3.5:0.8b'),
   defaultOptions: {
     modelSettings: {
       temperature: 0,
