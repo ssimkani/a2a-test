@@ -1,5 +1,6 @@
 
 import { Mastra } from '@mastra/core/mastra';
+import { LibSQLStore } from '@mastra/libsql';
 import { PinoLogger } from '@mastra/loggers';
 import { weatherWorkflow } from './workflows/weather-workflow';
 import { weatherAgent } from './agents/weather-agent';
@@ -31,8 +32,13 @@ export const mastra = new Mastra({
       '@libp2p/tcp',
       '@ipld/dag-cbor',
       '@multiformats/multiaddr',
+      '@mastra/libsql',
     ],
   },
+  storage: new LibSQLStore({
+    id: 'a2a-test-mastra-storage',
+    url: process.env.MASTRA_STORAGE_URL ?? 'file:./mastra.db',
+  }),
   workflows: { weatherWorkflow, killSwitchWorkflow },
   agents: { weatherAgent, a2aAgent, killSwitchSitrepAgent },
   tools: { sendToWindowsAgentTool },
