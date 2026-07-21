@@ -1,4 +1,5 @@
 import { createStep, createWorkflow } from '@mastra/core/workflows';
+import { z } from 'zod';
 import { getOrbitDbWorkflowStore } from '../orbitdb/client';
 import {
   salSchema,
@@ -8,6 +9,39 @@ import {
 } from '../orbitdb/workflow-state';
 
 const HEARTBEAT_INTERVAL_MS = 2_000;
+
+// Small local models occasionally emit null for a field they believe is
+// absent, even when the prompt asks for "unknown". Keep the provider-facing
+// schema tolerant, then normalize before writing the strict OrbitDB schema.
+const salModelSchema = z.object({
+  size: z.string().nullable(),
+  activity: z.string().nullable(),
+  location: z.string().nullable(),
+});
+
+const uteModelSchema = z.object({
+  unit: z.string().nullable(),
+  time: z.string().nullable(),
+  equipment: z.string().nullable(),
+});
+
+function normalizeSal(value: unknown) {
+  const candidate = salModelSchema.parse(value);
+  return salSchema.parse({
+    size: candidate.size ?? 'unknown',
+    activity: candidate.activity ?? 'unknown',
+    location: candidate.location ?? 'unknown',
+  });
+}
+
+function normalizeUte(value: unknown) {
+  const candidate = uteModelSchema.parse(value);
+  return uteSchema.parse({
+    unit: candidate.unit ?? 'unknown',
+    time: candidate.time ?? 'unknown',
+    equipment: candidate.equipment ?? 'unknown',
+  });
+}
 
 function localNodeId(): string {
   const nodeId = process.env.NODE_ID?.trim();
@@ -120,16 +154,16 @@ const extractSAL = createStep({
 
     const response = await heartbeatWhile(current.taskId, () =>
       agent.generate(
-        `DUMMY SAL EXTRACTION PROMPT - replace before operational use. Extract Size, Activity, and Location from only the transcript. Preserve reported counts and grid details. Use "unknown" only when a field is absent.\n\nRaw transcript:\n${current.rawTranscript}`,
+        `DUMMY SAL EXTRACTION PROMPT - replace before operational use. Return exactly the keys size, activity, and location. Extract Size, Activity, and Location from only the transcript. Preserve reported counts and copy any grid reference verbatim into location. If a field is genuinely absent, return the string "unknown"; never return null, omit a key, or invent details.\n\nRaw transcript:\n${current.rawTranscript}`,
         {
           structuredOutput: {
-            schema: salSchema,
+            schema: salModelSchema,
             jsonPromptInjection: true,
           },
         },
       ),
     );
-    const extractedSAL = salSchema.parse(response.object);
+    const extractedSAL = normalizeSal(response.object);
     const persisted = await persistOwnedUpdate(current.taskId, latest => ({
       ...latest,
       status: 'in_progress',
@@ -184,16 +218,16 @@ const extractUTE = createStep({
 
     const response = await heartbeatWhile(current.taskId, () =>
       agent.generate(
-        `DUMMY UTE EXTRACTION PROMPT - replace before operational use. Extract Unit, Time, and Equipment from only the transcript. Include all reported markings, vehicles, weapons, and communications equipment. Use "unknown" only when a field is absent.\n\nRaw transcript:\n${current.rawTranscript}`,
+        `DUMMY UTE EXTRACTION PROMPT - replace before operational use. Return exactly the keys unit, time, and equipment. Extract Unit, Time, and Equipment from only the transcript. Include all reported markings, vehicles, weapons, and communications equipment. If a field is genuinely absent, return the string "unknown"; never return null, omit a key, or invent details.\n\nRaw transcript:\n${current.rawTranscript}`,
         {
           structuredOutput: {
-            schema: uteSchema,
+            schema: uteModelSchema,
             jsonPromptInjection: true,
           },
         },
       ),
     );
-    const extractedUTE = uteSchema.parse(response.object);
+    const extractedUTE = normalizeUte(response.object);
     const persisted = await persistOwnedUpdate(current.taskId, latest => ({
       ...latest,
       status: 'in_progress',
