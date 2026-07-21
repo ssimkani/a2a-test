@@ -9,6 +9,10 @@ import {
   workflowStateSchema,
   type WorkflowState,
 } from '../../src/mastra/orbitdb/workflow-state';
+import {
+  normalizeSal,
+  normalizeUte,
+} from '../../src/mastra/workflows/kill-switch-extraction';
 
 test('workflow state uses taskId as a required stable document key', () => {
   const state = createWorkflowState({
@@ -83,4 +87,40 @@ test('watcher immediately runs in-progress work gracefully assigned to the local
   const runnable = findLocallyAssignedTasks([assigned, pending, foreign, complete], 'Node Bravo');
 
   assert.deepEqual(runnable.map(task => task.taskId), ['handoff-task']);
+});
+
+test('small-model array and numeric fields normalize into strict SAL and UTE strings', () => {
+  assert.deepEqual(
+    normalizeSal({
+      size: 12,
+      activity: 'moving east',
+      location: ['Route Red', '18S UJ 23450 67890'],
+    }),
+    {
+      size: '12',
+      activity: 'moving east',
+      location: 'Route Red; 18S UJ 23450 67890',
+    },
+  );
+
+  assert.deepEqual(
+    normalizeUte({
+      unit: 'North Company, Third Battalion',
+      time: 1435,
+      equipment: ['Two light trucks', 'One crew-served weapon', 'Multiple handheld radios'],
+    }),
+    {
+      unit: 'North Company, Third Battalion',
+      time: '1435',
+      equipment: 'Two light trucks; One crew-served weapon; Multiple handheld radios',
+    },
+  );
+});
+
+test('empty or null small-model fields normalize to unknown', () => {
+  assert.deepEqual(normalizeUte({ unit: null, time: '', equipment: [] }), {
+    unit: 'unknown',
+    time: 'unknown',
+    equipment: 'unknown',
+  });
 });
