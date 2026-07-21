@@ -8,10 +8,12 @@ import {
   type OrbitDbWorkflowStore,
 } from '../orbitdb/client';
 import { createWorkflowState, type WorkflowState } from '../orbitdb/workflow-state';
-import { findFailoverCandidates } from './failover-policy';
+import { findFailoverCandidates, findLocallyAssignedTasks } from './failover-policy';
 
 const WATCH_INTERVAL_MS = 2_000;
 const DEFAULT_TIMEOUT_MS = 5_000;
+const DEFAULT_HANDOFF_GRACE_MS = 750;
+const DEFAULT_FAILOVER_NODE_ID = 'Node Bravo';
 
 function requiredNodeId(): string {
   const nodeId = process.env.NODE_ID?.trim();
@@ -24,6 +26,17 @@ function requiredNodeId(): string {
 function positiveNumber(value: string | undefined, fallback: number): number {
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function nonNegativeNumber(value: string | undefined, fallback: number): number {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
+}
+
+function failoverNodeId(nodeId: string): string | undefined {
+  const configured = process.env.KILL_SWITCH_FAILOVER_NODE_ID?.trim();
+  const target = configured || (nodeId === 'Node Alpha' ? DEFAULT_FAILOVER_NODE_ID : undefined);
+  return target && target !== nodeId ? target : undefined;
 }
 
 function argumentValue(name: string): string | undefined {
@@ -116,13 +129,61 @@ async function startAlphaTask(store: OrbitDbWorkflowStore, runningTasks: Set<str
     .finally(() => runningTasks.delete(taskId));
 }
 
+async function handoffActiveTasks(store: OrbitDbWorkflowStore, nodeId: string): Promise<number> {
+  const targetNodeId = failoverNodeId(nodeId);
+  if (!targetNodeId) {
+    return 0;
+  }
+
+  const tasks = await store.listTasks();
+  const activeTasks = tasks.filter(
+    task => task.status === 'in_progress' && task.assignedNode === nodeId,
+  );
+  let handedOff = 0;
+
+  for (const task of activeTasks) {
+    const updated = await store.updateTask(task.taskId, current => {
+      if (current.status !== 'in_progress' || current.assignedNode !== nodeId) {
+        return undefined;
+      }
+
+      return {
+        ...current,
+        assignedNode: targetNodeId,
+        claimedFrom: nodeId,
+        lastHeartbeat: Date.now(),
+      };
+    });
+
+    if (updated) {
+      handedOff += 1;
+      console.log(
+        `[OrbitDB][${nodeId}] GRACEFUL HANDOFF COMMITTED: ${nodeId} -> ${targetNodeId} task=${task.taskId}`,
+      );
+    }
+  }
+
+  return handedOff;
+}
+
 async function main(): Promise<void> {
   const nodeId = requiredNodeId();
   const timeoutMs = positiveNumber(process.env.KILL_SWITCH_TIMEOUT_MS, DEFAULT_TIMEOUT_MS);
   const store = await getOrbitDbWorkflowStore();
   const runningTasks = new Set<string>();
+  const taskStartRequests = new Set<Promise<void>>();
   let scanActive = false;
   let shuttingDown = false;
+
+  const requestTaskStart = (): Promise<void> => {
+    const request = startAlphaTask(store, runningTasks);
+    taskStartRequests.add(request);
+    void request.then(
+      () => taskStartRequests.delete(request),
+      () => taskStartRequests.delete(request),
+    );
+    return request;
+  };
 
   console.log('============================================================');
   console.log(`[Watcher][${nodeId}] KILL-SWITCH WATCHER ONLINE`);
@@ -138,7 +199,29 @@ async function main(): Promise<void> {
 
     try {
       const tasks = await store.listTasks();
+      const assignedTasks = findLocallyAssignedTasks(tasks, nodeId);
       const candidates = findFailoverCandidates(tasks, nodeId, timeoutMs);
+
+      for (const assignedTask of assignedTasks) {
+        if (runningTasks.has(assignedTask.taskId)) {
+          continue;
+        }
+
+        console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+        console.log(
+          `[${nodeId}] ACCEPTING GRACEFUL HANDOFF FOR TASK ${assignedTask.taskId} FROM ${
+            assignedTask.claimedFrom ?? 'ANOTHER NODE'
+          }...`,
+        );
+        console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+
+        runningTasks.add(assignedTask.taskId);
+        void runWorkflow(assignedTask, store)
+          .catch(error => {
+            console.error(`[Mastra][${nodeId}] Assigned workflow failed for task=${assignedTask.taskId}.`, error);
+          })
+          .finally(() => runningTasks.delete(assignedTask.taskId));
+      }
 
       for (const staleTask of candidates) {
         if (runningTasks.has(staleTask.taskId)) {
@@ -179,19 +262,24 @@ async function main(): Promise<void> {
   await scan();
 
   if (process.argv.includes('--start-task') || process.env.KILL_SWITCH_START_TASK === 'true') {
-    await startAlphaTask(store, runningTasks);
+    await requestTaskStart();
   }
 
   const terminal = process.stdin.isTTY
     ? createInterface({ input: process.stdin, output: process.stdout, prompt: `[${nodeId}] command> ` })
     : undefined;
   if (terminal) {
-    console.log(`[Watcher][${nodeId}] Commands: start | status | help`);
+    console.log(`[Watcher][${nodeId}] Commands: start | status | quit | help`);
+    console.log(`[Watcher][${nodeId}] Type quit (or q) at any time; active work will hand off before exit.`);
     terminal.prompt();
     terminal.on('line', line => {
       const command = line.trim().toLowerCase();
+      if (command === 'quit' || command === 'q' || command === 'exit') {
+        void requestExit('quit command');
+        return;
+      }
       if (command === 'start') {
-        void startAlphaTask(store, runningTasks)
+        void requestTaskStart()
           .catch(error => console.error(`[Demo][${nodeId}] Unable to start task.`, error))
           .finally(() => terminal.prompt());
         return;
@@ -206,24 +294,53 @@ async function main(): Promise<void> {
       if (command && command !== 'help') {
         console.log(`[Watcher][${nodeId}] Unknown command '${command}'.`);
       }
-      console.log(`[Watcher][${nodeId}] Commands: start | status | help`);
+      console.log(`[Watcher][${nodeId}] Commands: start | status | quit | help`);
       terminal.prompt();
     });
   }
 
-  const shutdown = async (signal: string): Promise<void> => {
-    if (shuttingDown) {
-      return;
-    }
-    shuttingDown = true;
-    clearInterval(timer);
-    terminal?.close();
-    console.log(`[Watcher][${nodeId}] Received ${signal}; shutting down OrbitDB replica.`);
-    await closeOrbitDbWorkflowStore();
+  let shutdownPromise: Promise<void> | undefined;
+  const shutdown = (reason: string): Promise<void> => {
+    shutdownPromise ??= (async () => {
+      shuttingDown = true;
+      clearInterval(timer);
+      terminal?.close();
+      console.log(`[Watcher][${nodeId}] Received ${reason}; preparing a safe shutdown.`);
+
+      if (taskStartRequests.size > 0) {
+        console.log(`[Watcher][${nodeId}] Finishing task registration before handoff.`);
+        await Promise.allSettled([...taskStartRequests]);
+      }
+
+      const handedOff = await handoffActiveTasks(store, nodeId);
+      if (handedOff > 0) {
+        const graceMs = nonNegativeNumber(
+          process.env.KILL_SWITCH_HANDOFF_GRACE_MS,
+          DEFAULT_HANDOFF_GRACE_MS,
+        );
+        console.log(
+          `[Watcher][${nodeId}] Waiting ${graceMs}ms for ${handedOff} handoff update(s) to reach the peer.`,
+        );
+        await new Promise(resolve => setTimeout(resolve, graceMs));
+      }
+
+      await closeOrbitDbWorkflowStore();
+    })();
+    return shutdownPromise;
   };
 
-  process.once('SIGINT', () => void shutdown('SIGINT').finally(() => process.exit(0)));
-  process.once('SIGTERM', () => void shutdown('SIGTERM').finally(() => process.exit(0)));
+  const requestExit = (reason: string): void => {
+    void shutdown(reason)
+      .then(() => process.exit(0))
+      .catch(error => {
+        console.error(`[Watcher][${nodeId}] Safe shutdown failed.`, error);
+        process.exit(1);
+      });
+  };
+
+  process.once('SIGINT', () => requestExit('SIGINT'));
+  process.once('SIGTERM', () => requestExit('SIGTERM'));
+  process.once('SIGHUP', () => requestExit('SIGHUP'));
 }
 
 main().catch(async error => {

@@ -130,6 +130,8 @@ ORBITDB_BOOTSTRAP_MULTIADDRS=
 OLLAMA_BASE_URL=http://127.0.0.1:11434/api
 KILL_SWITCH_OLLAMA_MODEL=qwen3.5:2b
 KILL_SWITCH_TIMEOUT_MS=5000
+KILL_SWITCH_FAILOVER_NODE_ID=Node Bravo
+KILL_SWITCH_HANDOFF_GRACE_MS=750
 KILL_SWITCH_PAUSE_AFTER_SAL_MS=30000
 KILL_SWITCH_TASK_ID=sitrep-demo-001
 KILL_SWITCH_TRANSCRIPT_FILE=docs/sample-radio-transcript.txt
@@ -248,20 +250,28 @@ Alpha may also print `REPLICATION PEER JOINED`.
    start
    ```
 
-4. Alpha should show Step 1, periodic heartbeat writes, and then:
+   Alpha keeps a stable instruction in the terminal: type `quit` (or `q`) at
+   any time to transfer active work to Bravo and exit. `Ctrl+C`, closing the
+   terminal, and `SIGTERM` use the same graceful handoff path.
+
+4. You may stop Alpha immediately, during Step 1, or after any checkpoint. If
+   you wait for the usual checkpoint moment, Alpha shows:
 
    ```text
    [Mastra][Node Alpha] STEP 1 COMPLETE. SAL checkpoint committed to local OrbitDB.
    [DEMO][Node Alpha] CHECKPOINT REPLICATED. KILL NODE ALPHA NOW.
    ```
 
-5. Verify Bravo has printed a CRDT update for `sitrep-demo-001:in_progress@Node Alpha`.
-6. Terminate Alpha's kill-switch process during the 30-second hold. `Ctrl+C` is the safest rehearsal method. Closing the terminal or stopping the Mac process more abruptly is more theatrical but can make repeated rehearsals less predictable.
-7. After the last replicated heartbeat is older than five seconds, Bravo should show:
+5. Type `quit` in Alpha's terminal. Alpha commits ownership to Bravo, briefly
+   leaves the peer connection open so the update can replicate, and exits.
+6. Bravo should accept the handoff immediately. If Alpha stopped before SAL was
+   saved, Bravo performs Step 1 itself; if SAL was already saved, Bravo skips it.
+   A non-graceful crash that cannot run a signal handler still falls back to the
+   five-second heartbeat timeout.
+7. Bravo should show:
 
    ```text
-   [Node Bravo] DETECTED Node Alpha TIMEOUT. CLAIMING TASK sitrep-demo-001...
-   [OrbitDB][Node Bravo] OWNERSHIP TRANSFER COMMITTED: Node Alpha -> Node Bravo
+   [Node Bravo] ACCEPTING GRACEFUL HANDOFF FOR TASK sitrep-demo-001 FROM Node Alpha...
    [Mastra][Node Bravo] Skipping Step 1 (extractSAL): SAL data already exists in replicated memory.
    [Mastra][Node Bravo] STEP 2 START: extracting Unit, Time, Equipment with local Ollama.
    [Mastra][Node Bravo] STEP 3 COMPLETE. Task marked COMPLETED in OrbitDB.

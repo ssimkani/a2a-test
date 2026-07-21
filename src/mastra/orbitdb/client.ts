@@ -74,6 +74,7 @@ export class OrbitDbWorkflowStore {
   private readonly orbitdb: OrbitDbInstance;
   private readonly helia: HeliaWithLibp2p;
   private readonly updateQueues = new Map<string, Promise<unknown>>();
+  private lastReplicationSummary = '';
   private closed = false;
 
   private constructor(options: {
@@ -175,17 +176,24 @@ export class OrbitDbWorkflowStore {
   }
 
   async putTask(task: WorkflowState): Promise<WorkflowState> {
+    return this.writeTask(task, true);
+  }
+
+  private async writeTask(task: WorkflowState, logWrite: boolean): Promise<WorkflowState> {
     const parsed = workflowStateSchema.parse(task);
     await this.database.put(parsed);
-    console.log(
-      `[OrbitDB][${this.nodeId}] PUT task=${parsed.taskId} status=${parsed.status} owner=${parsed.assignedNode} revision=${parsed.revision}`,
-    );
+    if (logWrite) {
+      console.log(
+        `[OrbitDB][${this.nodeId}] PUT task=${parsed.taskId} status=${parsed.status} owner=${parsed.assignedNode} revision=${parsed.revision}`,
+      );
+    }
     return parsed;
   }
 
   async updateTask(
     taskId: string,
     updater: (current: WorkflowState) => WorkflowState | undefined,
+    options: { logWrite?: boolean } = {},
   ): Promise<WorkflowState | undefined> {
     return this.serializeTaskUpdate(taskId, async () => {
       const current = await this.getTask(taskId);
@@ -199,23 +207,30 @@ export class OrbitDbWorkflowStore {
       }
 
       const now = Date.now();
-      return this.putTask({
-        ...requested,
-        taskId: current.taskId,
-        revision: Math.max(current.revision + 1, requested.revision),
-        updatedAt: now,
-      });
+      return this.writeTask(
+        {
+          ...requested,
+          taskId: current.taskId,
+          revision: Math.max(current.revision + 1, requested.revision),
+          updatedAt: now,
+        },
+        options.logWrite ?? true,
+      );
     });
   }
 
   async touchHeartbeat(taskId: string, nodeId = this.nodeId): Promise<WorkflowState | undefined> {
-    return this.updateTask(taskId, current => {
-      if (current.status !== 'in_progress' || current.assignedNode !== nodeId) {
-        return undefined;
-      }
+    return this.updateTask(
+      taskId,
+      current => {
+        if (current.status !== 'in_progress' || current.assignedNode !== nodeId) {
+          return undefined;
+        }
 
-      return { ...current, lastHeartbeat: Date.now() };
-    });
+        return { ...current, lastHeartbeat: Date.now() };
+      },
+      { logWrite: false },
+    );
   }
 
   async claimTimedOutTask(
@@ -273,7 +288,14 @@ export class OrbitDbWorkflowStore {
     });
     this.database.events.on('update', async () => {
       const tasks = await this.listTasks().catch(() => []);
-      const summary = tasks.map(task => `${task.taskId}:${task.status}@${task.assignedNode}`).join(', ');
+      const summary = tasks
+        .map(task => `${task.taskId}:${task.status}@${task.assignedNode}`)
+        .sort()
+        .join(', ');
+      if (summary === this.lastReplicationSummary) {
+        return;
+      }
+      this.lastReplicationSummary = summary;
       console.log(`[OrbitDB][${this.nodeId}] CRDT UPDATE APPLIED${summary ? ` -> ${summary}` : ''}`);
     });
   }
