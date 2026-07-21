@@ -13,3 +13,10 @@ export function findFailoverCandidates(
       now - task.lastHeartbeat > timeoutMs,
   );
 }
+
+export function findLocallyAssignedTasks(
+  tasks: WorkflowState[],
+  localNodeId: string,
+): WorkflowState[] {
+  return tasks.filter(task => task.status === 'in_progress' && task.assignedNode === localNodeId);
+}

@@ -85,9 +85,7 @@ async function heartbeatWhile<T>(taskId: string, action: () => Promise<T>): Prom
     heartbeatQueue = heartbeatQueue
       .then(async () => {
         const updated = await store.touchHeartbeat(taskId, nodeId);
-        if (updated) {
-          console.log(`[Heartbeat][${nodeId}] task=${taskId} timestamp=${updated.lastHeartbeat}`);
-        } else {
+        if (!updated) {
           console.warn(`[Heartbeat][${nodeId}] task=${taskId} is no longer owned locally.`);
         }
       })
