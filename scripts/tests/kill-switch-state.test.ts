@@ -117,8 +117,8 @@ test('small-model array and numeric fields normalize into strict SAL and UTE str
   );
 });
 
-test('empty or null small-model fields normalize to unknown', () => {
-  assert.deepEqual(normalizeUte({ unit: null, time: '', equipment: [] }), {
+test('empty small-model fields normalize to unknown', () => {
+  assert.deepEqual(normalizeUte({ unit: '', time: [], equipment: [] }), {
     unit: 'unknown',
     time: 'unknown',
     equipment: 'unknown',

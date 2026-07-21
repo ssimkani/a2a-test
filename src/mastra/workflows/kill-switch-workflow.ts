@@ -122,11 +122,10 @@ const extractSAL = createStep({
 
     const response = await heartbeatWhile(current.taskId, () =>
       agent.generate(
-        `DUMMY SAL EXTRACTION PROMPT - replace before operational use. Return exactly the keys size, activity, and location. Every value must be one JSON string; do not return arrays or numbers. Extract Size, Activity, and Location from only the transcript. Preserve reported counts and copy any grid reference verbatim into location. If a field is genuinely absent, return the string "unknown"; never return null, omit a key, or invent details.\n\nRaw transcript:\n${current.rawTranscript}`,
+        `DUMMY SAL EXTRACTION PROMPT - replace before operational use. Return exactly the keys size, activity, and location. Every value must be one JSON string; do not return arrays or numbers. Size means the reported personnel or vehicle count and composition. Activity means what they are doing. Location means the reported route, grid reference, or landmark. Extract only from the transcript, preserve reported counts, and copy any grid reference verbatim into location. If a field is genuinely absent, return the string "unknown"; never return null, omit a key, or invent details.\n\nRaw transcript:\n${current.rawTranscript}`,
         {
           structuredOutput: {
             schema: salModelSchema,
-            jsonPromptInjection: true,
           },
         },
       ),
@@ -186,11 +185,10 @@ const extractUTE = createStep({
 
     const response = await heartbeatWhile(current.taskId, () =>
       agent.generate(
-        `DUMMY UTE EXTRACTION PROMPT - replace before operational use. Return exactly the keys unit, time, and equipment. Every value must be one JSON string; combine multiple equipment items into a single semicolon-separated string and do not return arrays or numbers. Extract Unit, Time, and Equipment from only the transcript. Include all reported markings, vehicles, weapons, and communications equipment. If a field is genuinely absent, return the string "unknown"; never return null, omit a key, or invent details.\n\nRaw transcript:\n${current.rawTranscript}`,
+        `DUMMY UTE EXTRACTION PROMPT - replace before operational use. Return exactly the keys unit, time, and equipment. Every value must be one JSON string; combine multiple equipment items into a single semicolon-separated string and do not return arrays or numbers. Unit means markings, affiliation, or unit identity. Time means the reported observation time and time basis. Equipment means all reported vehicles, weapons, radios, or other equipment. Extract only from the transcript. If a field is genuinely absent, return the string "unknown"; never return null, omit a key, or invent details.\n\nRaw transcript:\n${current.rawTranscript}`,
         {
           structuredOutput: {
             schema: uteModelSchema,
-            jsonPromptInjection: true,
           },
         },
       ),
