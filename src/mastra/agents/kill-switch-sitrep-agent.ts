@@ -1,8 +1,12 @@
 import { Agent } from '@mastra/core/agent';
-import { createOllama } from 'ollama-ai-provider-v2';
+import { createOllama } from 'ai-sdk-ollama';
 
+// ai-sdk-ollama expects the server root, while the previous adapter and some
+// existing demo .env files use an /api suffix.
+const ollamaBaseUrl = (process.env.OLLAMA_BASE_URL?.trim() || 'http://127.0.0.1:11434')
+  .replace(/\/?api\/?$/, '');
 const ollama = createOllama({
-  baseURL: process.env.OLLAMA_BASE_URL?.trim() || 'http://127.0.0.1:11434/api',
+  baseURL: ollamaBaseUrl,
 });
 
 export const killSwitchSitrepAgent = new Agent({
@@ -12,7 +16,10 @@ export const killSwitchSitrepAgent = new Agent({
 
 This is demonstration scaffolding. The operator will replace these instructions with the approved mission prompt.
 Return only the requested fields. Do not invent details; use "unknown" when the transcript does not provide a value.`,
-  model: ollama(process.env.KILL_SWITCH_OLLAMA_MODEL?.trim() || 'qwen3.5:2b'),
+  model: ollama(process.env.KILL_SWITCH_OLLAMA_MODEL?.trim() || 'qwen3.5:2b', {
+    structuredOutputs: true,
+    think: false,
+  }),
   defaultOptions: {
     modelSettings: {
       temperature: 0,
